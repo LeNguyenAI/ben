@@ -41,6 +41,14 @@ Không dùng service role key trong website.
 
 Trang chính luôn có dữ liệu mặc định trong `index.html`. Nếu Supabase chưa cấu hình hoặc mất kết nối, website vẫn hiển thị bình thường. Khi Supabase được cấu hình, `assets/cms/cms-runtime.js` sẽ đọc dữ liệu published từ các bảng và cập nhật nội dung trang.
 
+## Đặt bàn và email tự động
+
+- Khách gửi form đặt bàn sẽ được lưu vào bảng `booking_requests`.
+- Admin xem và xử lý tại `/admin/bookings/`.
+- Trang đặt bàn có nút xuất dữ liệu booking ra file Excel/CSV.
+- Website đã gọi sẵn Edge Function `notify-booking` để gửi email khi có booking mới.
+- Để bật email thật, xem hướng dẫn trong `supabase/README_BOOKING_EMAIL.md`.
+
 ## Bảo mật
 
 - Frontend chỉ dùng anon key.

@@ -600,8 +600,8 @@ async function bookingsPage() {
         </div>
       </div>
       <div class="booking-notice">
-        <b>Thông báo tự động</b>
-        <span>Muốn gửi email/Zalo tự động cần bật thêm webhook riêng. Bản này đã sẵn sàng dữ liệu để kết nối bước tiếp theo.</span>
+        <b>Nơi nhận thông tin đặt bàn</b>
+        <span>Mỗi khi khách gửi form, thông tin sẽ tự lưu tại đây. Hãy kiểm tra tab Khách mới, gọi hoặc nhắn Zalo để xác nhận lại với khách.</span>
       </div>
     </div>
     <nav class="booking-tabs" aria-label="Lọc đặt bàn">
