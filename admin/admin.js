@@ -11,6 +11,7 @@ const adminLinks = [
   ["Gallery", "/admin/gallery/"],
   ["Video", "/admin/videos/"],
   ["Menu", "/admin/menu/"],
+  ["Đặt bàn", "/admin/bookings/"],
   ["Cài đặt", "/admin/settings/"]
 ];
 
@@ -126,17 +127,19 @@ function shell(title, subtitle = "") {
 async function dashboard() {
   const body = shell("Tổng quan", "Quản lý nội dung, hình ảnh, gallery, video, menu và thông tin website.");
   if (!body || !(await requireAdmin())) return;
-  const [sections, gallery, videos, menu] = await Promise.all([
+  const [sections, gallery, videos, menu, bookings] = await Promise.all([
     supa.from("site_sections").select("id", { count: "exact", head: true }),
     supa.from("gallery_items").select("id", { count: "exact", head: true }),
     supa.from("video_items").select("id", { count: "exact", head: true }).then((res) => res).catch(() => ({ count: 0 })),
-    supa.from("menu_items").select("id", { count: "exact", head: true })
+    supa.from("menu_items").select("id", { count: "exact", head: true }),
+    supa.from("booking_requests").select("id", { count: "exact", head: true }).then((res) => res).catch(() => ({ count: 0 }))
   ]);
   body.innerHTML = `<div class="grid">
     <div class="panel"><h2>Nội dung</h2><p class="muted">${sections.count || 0} section có thể chỉnh.</p><a class="btn primary" href="/admin/content/">Sửa nội dung</a></div>
     <div class="panel"><h2>Gallery</h2><p class="muted">${gallery.count || 0} ảnh trong thư viện.</p><a class="btn primary" href="/admin/gallery/">Quản lý gallery</a></div>
     <div class="panel"><h2>Video</h2><p class="muted">${videos.count || 0} video đang lưu.</p><a class="btn primary" href="/admin/videos/">Quản lý video</a></div>
     <div class="panel"><h2>Menu</h2><p class="muted">${menu.count || 0} món đang lưu.</p><a class="btn primary" href="/admin/menu/">Quản lý menu</a></div>
+    <div class="panel"><h2>Đặt bàn</h2><p class="muted">${bookings.count || 0} yêu cầu từ khách.</p><a class="btn primary" href="/admin/bookings/">Xem đặt bàn</a></div>
     <div class="panel"><h2>Cài đặt</h2><p class="muted">Hotline, email, Google Maps, social và SEO.</p><a class="btn primary" href="/admin/settings/">Mở cài đặt</a></div>
   </div>`;
 }
@@ -465,6 +468,40 @@ async function videosPage() {
   });
 }
 
+async function bookingsPage() {
+  const body = shell("Đặt bàn", "Danh sách khách đã gửi form đặt bàn trên website.");
+  if (!body || !(await requireAdmin())) return;
+  const { data = [], error } = await supa
+    .from("booking_requests")
+    .select("*")
+    .order("created_at", { ascending: false })
+    .limit(120);
+  if (error) {
+    body.innerHTML = `<div class="panel"><h2>Chưa sẵn sàng</h2><p class="muted">Hãy chạy file <b>supabase/005_booking_requests.sql</b> trong Supabase để bật lưu đặt bàn.</p><p class="danger-text">${esc(error.message)}</p></div>`;
+    return;
+  }
+  body.innerHTML = `<div class="content-helper"><div><b>Yêu cầu đặt bàn</b><p class="muted">Khách gửi form sẽ nằm ở đây. Nên gọi hoặc nhắn Zalo xác nhận lại trước khi giữ bàn.</p></div><a class="btn primary" href="tel:0869159615">Gọi hotline</a></div><div class="item-list booking-request-list">${data.length ? data.map((row) => `
+    <article class="panel booking-request-card">
+      <div class="booking-card-head"><div><h2>${esc(row.name || "Khách chưa nhập tên")}</h2><p class="mini">${esc(row.created_at || "")}</p></div><span class="booking-status">${esc(row.status || "new")}</span></div>
+      <div class="booking-info-grid">
+        <p><b>SĐT</b><a href="tel:${esc(row.phone || "")}">${esc(row.phone || "Chưa có")}</a></p>
+        <p><b>Ngày giờ</b>${esc(row.booking_date || "")} ${esc(row.booking_time || "")}</p>
+        <p><b>Số khách</b>${esc(row.guests || "")}</p>
+        <p><b>Khu vực</b>${esc(row.area || "")}</p>
+        <p><b>Nhu cầu</b>${esc(row.booking_type || "")}</p>
+        <p><b>Mục đích</b>${esc(row.purpose || "")}</p>
+      </div>
+      ${row.note ? `<p class="booking-note"><b>Ghi chú</b>${esc(row.note)}</p>` : ""}
+      ${row.event_type || row.event_scale || row.budget || row.concept ? `<p class="booking-note"><b>Sự kiện</b>${esc([row.event_type, row.event_scale, row.budget, row.concept].filter(Boolean).join(" · "))}</p>` : ""}
+      <div class="toolbar"><a class="btn primary" href="tel:${esc(row.phone || "")}">Gọi khách</a><a class="btn" href="https://zalo.me/${esc(String(row.phone || "").replace(/[^0-9]/g, ""))}" target="_blank" rel="noopener noreferrer">Nhắn Zalo</a><button class="btn mark-booking" data-id="${esc(row.id)}" type="button">Đã xử lý</button></div>
+    </article>`).join("") : `<div class="empty-card"><h2>Chưa có đặt bàn</h2><p class="muted">Khi khách gửi form, thông tin sẽ hiện ở đây.</p></div>`}</div>`;
+  $$(".mark-booking").forEach((button) => button.addEventListener("click", async () => {
+    const { error } = await supa.from("booking_requests").update({ status: "done" }).eq("id", button.dataset.id);
+    toast(error ? error.message : "Đã đánh dấu xử lý", !error);
+    if (!error) setTimeout(() => location.reload(), 500);
+  }));
+}
+
 async function settingsPage() {
   const body = shell("Cài đặt", "Hotline, email, Google Maps, social, SEO và các link quan trọng.");
   if (!body || !(await requireAdmin())) return;
@@ -486,5 +523,6 @@ else if (route === "images") uploadPage();
 else if (route === "gallery") tablePage("gallery");
 else if (route === "videos") videosPage();
 else if (route === "menu") tablePage("menu");
+else if (route === "bookings") bookingsPage();
 else if (route === "settings") settingsPage();
 else dashboard();
