@@ -34,12 +34,27 @@ Không dùng service role key trong website.
 - `/admin/content`: sửa text, section, ảnh đại diện section, bật/tắt nội dung.
 - `/admin/images`: upload ảnh vào Supabase Storage.
 - `/admin/gallery`: quản lý ảnh gallery theo tab.
+- `/admin/videos`: quản lý video thật cho tab Video.
 - `/admin/menu`: quản lý món, giá, ảnh và thứ tự hiển thị.
 - `/admin/settings`: hotline, email, maps, social, SEO.
 
 ## Cách hoạt động
 
 Trang chính luôn có dữ liệu mặc định trong `index.html`. Nếu Supabase chưa cấu hình hoặc mất kết nối, website vẫn hiển thị bình thường. Khi Supabase được cấu hình, `assets/cms/cms-runtime.js` sẽ đọc dữ liệu published từ các bảng và cập nhật nội dung trang.
+
+## Bổ sung Video Manager
+
+Sau khi đã chạy schema cũ, chạy thêm `supabase/004_video_manager.sql` trong Supabase SQL Editor. Admin vào `/admin/videos` để thêm video.
+
+Quy trình nhanh:
+
+1. Chọn loại video: YouTube, Vimeo, TikTok, Facebook, MP4 hoặc External.
+2. Dán URL video.
+3. Chọn hoặc dán thumbnail.
+4. Nhập tiêu đề, mô tả và thứ tự.
+5. Bấm lưu.
+
+YouTube watch, share và Shorts sẽ tự chuyển thành embed URL. Vimeo cũng tự chuyển embed. TikTok/Facebook được lưu URL gốc và mở tab mới nếu nhúng không ổn định. MP4 chỉ tải khi khách bấm play, dùng poster thumbnail và `preload="metadata"`.
 
 ## Bảo mật
 

@@ -21,6 +21,43 @@
   };
   const phoneHref = (phone) => phone ? `tel:${phone.replace(/[^\d+]/g, "")}` : "";
   const mailHref = (email) => email ? `mailto:${email}` : "";
+  const isSafeUrl = (value = "") => {
+    try {
+      const url = new URL(value, window.location.origin);
+      return ["http:", "https:"].includes(url.protocol) || value.startsWith("/");
+    } catch {
+      return false;
+    }
+  };
+  const normalizeVideo = (type, rawUrl, rawEmbed) => {
+    const value = String(rawUrl || "").trim();
+    if (!value || /^javascript:/i.test(value) || !isSafeUrl(value)) return { ok: false, embedUrl: "", openUrl: "" };
+    const url = new URL(value, window.location.origin);
+    const host = url.hostname.replace(/^www\./, "").toLowerCase();
+    if (type === "youtube") {
+      let id = "";
+      if (host === "youtu.be") id = url.pathname.split("/").filter(Boolean)[0] || "";
+      if (host.endsWith("youtube.com")) {
+        if (url.pathname.startsWith("/watch")) id = url.searchParams.get("v") || "";
+        else if (url.pathname.startsWith("/shorts/")) id = url.pathname.split("/")[2] || "";
+        else if (url.pathname.startsWith("/embed/")) id = url.pathname.split("/")[2] || "";
+      }
+      if (!id) return { ok: false, embedUrl: "", openUrl: value };
+      return { ok: true, embedUrl: `https://www.youtube.com/embed/${id}`, openUrl: value, thumbnail: `https://img.youtube.com/vi/${id}/hqdefault.jpg` };
+    }
+    if (type === "vimeo") {
+      if (!host.endsWith("vimeo.com")) return { ok: false, embedUrl: "", openUrl: value };
+      const id = url.pathname.split("/").filter(Boolean).find((part) => /^\d+$/.test(part));
+      if (!id) return { ok: false, embedUrl: "", openUrl: value };
+      return { ok: true, embedUrl: `https://player.vimeo.com/video/${id}`, openUrl: value };
+    }
+    if (type === "mp4") {
+      return /\.mp4($|\?)/i.test(url.pathname + url.search) ? { ok: true, embedUrl: value, openUrl: value } : { ok: false, embedUrl: "", openUrl: value };
+    }
+    if (type === "tiktok") return host.endsWith("tiktok.com") ? { ok: true, embedUrl: "", openUrl: value } : { ok: false, embedUrl: "", openUrl: value };
+    if (type === "facebook") return host.endsWith("facebook.com") || host === "fb.watch" ? { ok: true, embedUrl: "", openUrl: value } : { ok: false, embedUrl: "", openUrl: value };
+    return { ok: Boolean(rawEmbed || value), embedUrl: rawEmbed || "", openUrl: value };
+  };
 
   async function loadSettings() {
     const { data, error } = await client.from("site_settings").select("setting_key,setting_value");
@@ -111,6 +148,89 @@
     });
   }
 
+  function ensureVideoModal() {
+    let modal = document.getElementById("videoModal");
+    if (modal) return modal;
+    modal = document.createElement("div");
+    modal.id = "videoModal";
+    modal.className = "lightbox video-modal";
+    modal.setAttribute("aria-hidden", "true");
+    modal.setAttribute("role", "dialog");
+    modal.setAttribute("aria-label", "Xem video");
+    modal.innerHTML = `<button class="lightbox-close" type="button" aria-label="Đóng">×</button><div class="video-modal-frame"></div><div class="lightbox-caption"></div>`;
+    document.body.appendChild(modal);
+    modal.querySelector(".lightbox-close").addEventListener("click", closeVideoModal);
+    modal.addEventListener("click", (event) => { if (event.target === modal) closeVideoModal(); });
+    window.addEventListener("keydown", (event) => {
+      if (event.key === "Escape" && modal.classList.contains("open")) closeVideoModal();
+    });
+    return modal;
+  }
+
+  function closeVideoModal() {
+    const modal = document.getElementById("videoModal");
+    if (!modal) return;
+    modal.classList.remove("open");
+    modal.setAttribute("aria-hidden", "true");
+    modal.querySelector(".video-modal-frame").innerHTML = "";
+    modal.querySelector(".lightbox-caption").textContent = "";
+    document.body.style.overflow = "";
+  }
+
+  function openVideo(item) {
+    const normalized = normalizeVideo(item.video_type, item.video_url, item.embed_url);
+    if (!normalized.ok && normalized.openUrl) {
+      window.open(normalized.openUrl, "_blank", "noopener,noreferrer");
+      return;
+    }
+    const modal = ensureVideoModal();
+    const frame = modal.querySelector(".video-modal-frame");
+    const caption = modal.querySelector(".lightbox-caption");
+    if (item.video_type === "mp4") {
+      frame.innerHTML = `<video controls playsinline preload="metadata" ${item.thumbnail_url ? `poster="${esc(item.thumbnail_url)}"` : ""} ${item.autoplay && item.muted ? "autoplay" : ""} ${item.muted ? "muted" : ""}><source src="${esc(normalized.embedUrl || item.video_url)}" type="video/mp4"></video>`;
+    } else if (normalized.embedUrl) {
+      const src = `${normalized.embedUrl}${normalized.embedUrl.includes("?") ? "&" : "?"}autoplay=1`;
+      frame.innerHTML = `<iframe src="${esc(src)}" loading="lazy" allow="autoplay; encrypted-media; picture-in-picture" allowfullscreen title="${esc(item.title || "Video Bến Chill Garden")}"></iframe>`;
+    } else if (normalized.openUrl) {
+      frame.innerHTML = `<a class="btn primary" href="${esc(normalized.openUrl)}" target="_blank" rel="noopener noreferrer">Mở video</a>`;
+    } else {
+      frame.innerHTML = `<p>Video hiện chưa sẵn sàng.</p>`;
+    }
+    caption.textContent = item.description || item.title || "";
+    modal.classList.add("open");
+    modal.setAttribute("aria-hidden", "false");
+    document.body.style.overflow = "hidden";
+  }
+
+  async function loadVideos() {
+    const panel = document.getElementById("tab-video");
+    const grid = panel ? panel.querySelector(".video-grid") : null;
+    if (!grid) return;
+    const { data, error } = await client
+      .from("video_items")
+      .select("*")
+      .eq("is_visible", true)
+      .order("sort_order", { ascending: true });
+    if (error || !data || !data.length) return;
+    grid.innerHTML = data.map((item) => {
+      const normalized = normalizeVideo(item.video_type, item.video_url, item.embed_url);
+      const thumb = item.thumbnail_url || normalized.thumbnail || "./assets/hero-riverside.jpg";
+      return `<article class="video-card cms-video-card" data-video-id="${esc(item.id)}">
+        <img src="${esc(thumb)}" alt="${esc(item.title || "Video Bến Chill Garden")}" width="1600" height="901" loading="lazy">
+        <button class="play" type="button" aria-label="Phát video ${esc(item.title || "Bến Chill Garden")}"><span>PLAY</span></button>
+        <p>${esc(item.title || "Video Bến Chill Garden")}</p>
+      </article>`;
+    }).join("");
+    grid.querySelectorAll(".cms-video-card").forEach((card) => {
+      const item = data.find((row) => String(row.id) === String(card.dataset.videoId));
+      card.querySelector(".play").addEventListener("click", () => openVideo(item));
+      card.addEventListener("click", (event) => {
+        if (event.target.closest(".play")) return;
+        openVideo(item);
+      });
+    });
+  }
+
   async function boot() {
     try {
       const settings = await loadSettings();
@@ -141,7 +261,7 @@
           socials.innerHTML = links.map(([label, url]) => `<a href="${url}" target="_blank" rel="noopener noreferrer">${label}</a>`).join("");
         }
       }
-      await Promise.all([loadSections(), loadMenu(), loadGallery()]);
+      await Promise.all([loadSections(), loadMenu(), loadGallery(), loadVideos()]);
     } catch (error) {
       console.warn("CMS fallback is active.", error);
     }

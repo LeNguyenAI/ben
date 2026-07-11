@@ -9,6 +9,7 @@ const adminLinks = [
   ["Nội dung", "/admin/content/"],
   ["Hình ảnh", "/admin/images/"],
   ["Gallery", "/admin/gallery/"],
+  ["Video", "/admin/videos/"],
   ["Menu", "/admin/menu/"],
   ["Cài đặt", "/admin/settings/"]
 ];
@@ -27,6 +28,47 @@ const esc = (value = "") => String(value).replace(/[&<>"']/g, (ch) => ({ "&": "&
 const parseJSON = (value) => {
   if (!value || !String(value).trim()) return {};
   try { return JSON.parse(value); } catch { return {}; }
+};
+const isSafeUrl = (value = "") => {
+  try {
+    const url = new URL(value.trim());
+    return ["http:", "https:"].includes(url.protocol);
+  } catch {
+    return false;
+  }
+};
+const normalizeVideo = (type, rawUrl) => {
+  const value = String(rawUrl || "").trim();
+  if (!value || !isSafeUrl(value)) return { ok: false, embedUrl: "", message: "URL video không hợp lệ." };
+  const url = new URL(value);
+  const host = url.hostname.replace(/^www\./, "").toLowerCase();
+  if (type === "youtube") {
+    let id = "";
+    if (host === "youtu.be") id = url.pathname.split("/").filter(Boolean)[0] || "";
+    if (host.endsWith("youtube.com")) {
+      if (url.pathname.startsWith("/watch")) id = url.searchParams.get("v") || "";
+      else if (url.pathname.startsWith("/shorts/")) id = url.pathname.split("/")[2] || "";
+      else if (url.pathname.startsWith("/embed/")) id = url.pathname.split("/")[2] || "";
+    }
+    if (!id) return { ok: false, embedUrl: "", message: "Không nhận diện được YouTube ID." };
+    return { ok: true, embedUrl: `https://www.youtube.com/embed/${id}`, thumbnail: `https://img.youtube.com/vi/${id}/hqdefault.jpg` };
+  }
+  if (type === "vimeo") {
+    if (!host.endsWith("vimeo.com")) return { ok: false, embedUrl: "", message: "URL Vimeo không hợp lệ." };
+    const id = url.pathname.split("/").filter(Boolean).find((part) => /^\d+$/.test(part));
+    if (!id) return { ok: false, embedUrl: "", message: "Không nhận diện được Vimeo ID." };
+    return { ok: true, embedUrl: `https://player.vimeo.com/video/${id}` };
+  }
+  if (type === "tiktok") {
+    return host.endsWith("tiktok.com") ? { ok: true, embedUrl: "" } : { ok: false, embedUrl: "", message: "URL TikTok không hợp lệ." };
+  }
+  if (type === "facebook") {
+    return host.endsWith("facebook.com") || host === "fb.watch" ? { ok: true, embedUrl: "" } : { ok: false, embedUrl: "", message: "URL Facebook không hợp lệ." };
+  }
+  if (type === "mp4") {
+    return /\.mp4($|\?)/i.test(url.pathname + url.search) ? { ok: true, embedUrl: value } : { ok: false, embedUrl: "", message: "URL MP4 phải kết thúc bằng .mp4." };
+  }
+  return { ok: true, embedUrl: "" };
 };
 
 async function requireAdmin() {
@@ -91,14 +133,16 @@ function shell(title, subtitle = "") {
 async function dashboard() {
   const body = shell("Tổng quan", "Quản lý nội dung, hình ảnh, gallery, menu và thông tin website.");
   if (!body || !(await requireAdmin())) return;
-  const [sections, gallery, menu] = await Promise.all([
+  const [sections, gallery, videos, menu] = await Promise.all([
     supa.from("site_sections").select("id", { count: "exact", head: true }),
     supa.from("gallery_items").select("id", { count: "exact", head: true }),
+    supa.from("video_items").select("id", { count: "exact", head: true }),
     supa.from("menu_items").select("id", { count: "exact", head: true })
   ]);
   body.innerHTML = `<div class="grid">
     <div class="panel"><h2>Nội dung</h2><p class="muted">${sections.count || 0} section có thể chỉnh.</p><a class="btn primary" href="/admin/content/">Sửa nội dung</a></div>
     <div class="panel"><h2>Gallery</h2><p class="muted">${gallery.count || 0} ảnh trong thư viện.</p><a class="btn primary" href="/admin/gallery/">Quản lý gallery</a></div>
+    <div class="panel"><h2>Video</h2><p class="muted">${videos.count || 0} video đang lưu.</p><a class="btn primary" href="/admin/videos/">Quản lý video</a></div>
     <div class="panel"><h2>Menu</h2><p class="muted">${menu.count || 0} món đang lưu.</p><a class="btn primary" href="/admin/menu/">Quản lý menu</a></div>
     <div class="panel"><h2>Cài đặt</h2><p class="muted">Hotline, email, Google Maps, social và SEO.</p><a class="btn primary" href="/admin/settings/">Mở cài đặt</a></div>
   </div>`;
@@ -222,6 +266,96 @@ async function tablePage(kind) {
   });
 }
 
+async function videosPage() {
+  const body = shell("Video", "Thêm video thật cho tab Video. YouTube/Vimeo tự chuyển sang embed, TikTok/Facebook mở tab mới khi cần.");
+  if (!body || !(await requireAdmin())) return;
+  const { data = [] } = await supa.from("video_items").select("*").order("sort_order", { ascending: true });
+  body.innerHTML = `<div class="toolbar" style="margin-bottom:16px"><button class="btn primary" id="addVideo">Thêm video</button></div><div class="item-list" id="videoItems"></div>`;
+  const render = (items) => {
+    $("#videoItems").innerHTML = items.map((row) => `
+      <form class="panel video-form" data-id="${row.id || ""}">
+        ${row.thumbnail_url ? `<img class="preview-img video-thumb-preview" src="${esc(row.thumbnail_url)}" alt="">` : `<div class="preview-img video-thumb-preview" style="display:grid;place-items:center;color:var(--muted)">Chưa có thumbnail</div>`}
+        <div class="grid">
+          <label>Tiêu đề<input name="title" value="${esc(row.title || "")}" required></label>
+          <label>Loại video<select name="video_type" required><option value="youtube" ${row.video_type === "youtube" ? "selected" : ""}>YouTube</option><option value="vimeo" ${row.video_type === "vimeo" ? "selected" : ""}>Vimeo</option><option value="tiktok" ${row.video_type === "tiktok" ? "selected" : ""}>TikTok</option><option value="facebook" ${row.video_type === "facebook" ? "selected" : ""}>Facebook</option><option value="mp4" ${row.video_type === "mp4" ? "selected" : ""}>MP4</option><option value="external" ${row.video_type === "external" ? "selected" : ""}>External</option></select></label>
+          <label class="full">URL video<input name="video_url" value="${esc(row.video_url || "")}" placeholder="Dán link YouTube, Vimeo, TikTok, Facebook hoặc MP4" required></label>
+          <label>Thumbnail URL<input name="thumbnail_url" value="${esc(row.thumbnail_url || "")}" placeholder="Có thể để trống với YouTube"></label>
+          <label>Embed URL<input name="embed_url" value="${esc(row.embed_url || "")}" readonly></label>
+          <label>Nhóm<input name="category" value="${esc(row.category || "video")}"></label>
+          <label>Thứ tự<input name="sort_order" type="number" value="${row.sort_order || 0}"></label>
+          <label><select name="is_visible"><option value="true" ${row.is_visible !== false ? "selected" : ""}>Hiển thị</option><option value="false" ${row.is_visible === false ? "selected" : ""}>Ẩn</option></select></label>
+          <label><select name="autoplay"><option value="false" ${!row.autoplay ? "selected" : ""}>Không autoplay</option><option value="true" ${row.autoplay ? "selected" : ""}>Autoplay</option></select></label>
+          <label><select name="muted"><option value="true" ${row.muted !== false ? "selected" : ""}>Muted</option><option value="false" ${row.muted === false ? "selected" : ""}>Có âm thanh khi bấm</option></select></label>
+          <label class="full">Mô tả<textarea name="description">${esc(row.description || "")}</textarea></label>
+        </div>
+        <div class="toolbar" style="margin-top:14px"><button class="btn choose-thumb" type="button">Chọn thumbnail từ thư viện</button><button class="btn preview-video" type="button">Preview</button></div>
+        <div class="video-preview mini" style="margin-top:12px"></div>
+        <div class="row"><button class="btn danger delete-video" type="button">Xóa</button><button class="btn primary">Lưu video</button></div>
+      </form>`).join("");
+  };
+  render(data);
+  $("#addVideo").addEventListener("click", () => render([{ title: "", video_type: "youtube", category: "video", sort_order: data.length + 1, is_visible: true, muted: true, autoplay: false }, ...data]));
+  const updateFormPreview = (form) => {
+    const type = form.video_type.value;
+    const result = normalizeVideo(type, form.video_url.value);
+    if (!result.ok) {
+      $(".video-preview", form).innerHTML = `<span class="danger-text">${esc(result.message)}</span>`;
+      return result;
+    }
+    if (!form.thumbnail_url.value && result.thumbnail) form.thumbnail_url.value = result.thumbnail;
+    form.embed_url.value = result.embedUrl || "";
+    const thumb = form.thumbnail_url.value;
+    const preview = $(".video-preview", form);
+    if (type === "youtube" || type === "vimeo") preview.innerHTML = `<iframe style="width:100%;aspect-ratio:16/9;border:0;border-radius:14px" src="${esc(result.embedUrl)}" loading="lazy" allowfullscreen></iframe>`;
+    else if (type === "mp4") preview.innerHTML = `<video controls preload="metadata" style="width:100%;border-radius:14px" ${thumb ? `poster="${esc(thumb)}"` : ""}><source src="${esc(form.video_url.value)}" type="video/mp4"></video>`;
+    else preview.innerHTML = `<a class="btn" href="${esc(form.video_url.value)}" target="_blank" rel="noopener noreferrer">Mở video để xem trước</a>`;
+    const img = $(".video-thumb-preview", form);
+    if (thumb && img?.tagName === "IMG") img.src = thumb;
+    return result;
+  };
+  $("#videoItems").addEventListener("click", async (event) => {
+    const form = event.target.closest(".video-form");
+    if (!form) return;
+    if (event.target.classList.contains("preview-video")) updateFormPreview(form);
+    if (event.target.classList.contains("choose-thumb")) {
+      const { data: files = [], error } = await supa.storage.from(bucket).list("", { limit: 80, sortBy: { column: "created_at", order: "desc" } });
+      if (error) return toast(error.message, false);
+      const names = files.filter((file) => /\.(jpg|jpeg|png|webp)$/i.test(file.name)).map((file) => file.name);
+      if (!names.length) return toast("Chưa có ảnh trong Media Library.", false);
+      const choice = prompt(`Nhập số ảnh muốn chọn:\n${names.map((name, index) => `${index + 1}. ${name}`).join("\n")}`);
+      const picked = names[Number(choice) - 1];
+      if (!picked) return;
+      const { data: publicUrl } = supa.storage.from(bucket).getPublicUrl(picked);
+      form.thumbnail_url.value = publicUrl.publicUrl;
+      updateFormPreview(form);
+    }
+    if (event.target.classList.contains("delete-video")) {
+      if (!form.dataset.id || !confirm("Xóa video này?")) return;
+      const { error } = await supa.from("video_items").delete().eq("id", form.dataset.id);
+      toast(error ? error.message : "Đã xóa video", !error);
+      if (!error) form.remove();
+    }
+  });
+  $("#videoItems").addEventListener("submit", async (event) => {
+    const form = event.target.closest(".video-form");
+    if (!form) return;
+    event.preventDefault();
+    const result = updateFormPreview(form);
+    if (!result.ok) return toast(result.message, false);
+    const payload = Object.fromEntries(new FormData(form));
+    payload.sort_order = Number(payload.sort_order || 0);
+    payload.is_visible = payload.is_visible === "true";
+    payload.autoplay = payload.autoplay === "true";
+    payload.muted = payload.muted === "true";
+    payload.embed_url = result.embedUrl || payload.embed_url || "";
+    if (!payload.thumbnail_url && result.thumbnail) payload.thumbnail_url = result.thumbnail;
+    const id = form.dataset.id;
+    const request = id ? supa.from("video_items").update(payload).eq("id", id) : supa.from("video_items").insert(payload);
+    const { error } = await request;
+    toast(error ? error.message : "Đã lưu video", !error);
+  });
+}
+
 async function settingsPage() {
   const body = shell("Cài đặt", "Hotline, email, Google Maps, social, SEO và các link quan trọng.");
   if (!body || !(await requireAdmin())) return;
@@ -241,6 +375,7 @@ if (path.includes("/admin/login")) loginPage();
 else if (route === "content") contentPage();
 else if (route === "images") uploadPage();
 else if (route === "gallery") tablePage("gallery");
+else if (route === "videos") videosPage();
 else if (route === "menu") tablePage("menu");
 else if (route === "settings") settingsPage();
 else dashboard();
