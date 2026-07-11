@@ -300,7 +300,15 @@ async function tablePage(kind) {
   const render = (items) => {
     $("#items").innerHTML = items.map((row) => `
       <form class="panel item-form media-admin-card" data-id="${row.id || ""}">
-        <div class="media-preview">${row.image_url ? `<img src="${esc(row.image_url)}" alt="">` : `<span>Chưa chọn ảnh</span>`}</div>
+        <div class="media-side">
+          <div class="media-preview">${row.image_url ? `<img src="${esc(row.image_url)}" alt="">` : `<span>Chưa chọn ảnh</span>`}</div>
+          <input class="item-upload-input" type="file" accept="image/png,image/jpeg,image/webp" hidden>
+          <div class="toolbar media-image-actions">
+            <button class="btn item-pick-image" type="button">Chọn từ thư viện</button>
+            <button class="btn item-upload-image" type="button">Upload ảnh mới</button>
+            <button class="btn danger item-clear-image" type="button">Xoá ảnh</button>
+          </div>
+        </div>
         <div class="grid">
           <label>${isMenu ? "Tên món" : "Caption"}<input name="${isMenu ? "name" : "caption"}" value="${esc(isMenu ? row.name || "" : row.caption || "")}"></label>
           <label>${isMenu ? "Nhóm món" : "Tab ảnh"}<input name="category" value="${esc(row.category || (isMenu ? "food" : "space"))}"></label>
@@ -315,7 +323,29 @@ async function tablePage(kind) {
       </form>`).join("");
   };
   render(data);
+  const setItemImage = (form, url) => {
+    form.image_url.value = url || "";
+    const preview = $(".media-preview", form);
+    if (!preview) return;
+    preview.innerHTML = url ? `<img src="${esc(url)}" alt="">` : `<span>Chưa chọn ảnh</span>`;
+  };
   $("#addItem").addEventListener("click", () => render([empty, ...data]));
+  $("#items").addEventListener("change", async (event) => {
+    const form = event.target.closest(".item-form");
+    if (!form) return;
+    if (event.target.name === "image_url") setItemImage(form, event.target.value.trim());
+    if (event.target.classList.contains("item-upload-input")) {
+      const file = event.target.files[0];
+      if (!file) return;
+      if (!["image/png", "image/jpeg", "image/webp"].includes(file.type) || file.size > 8 * 1024 * 1024) return toast("Chỉ nhận JPG, PNG, WEBP dưới 8MB.", false);
+      const uploadedName = safeFileName(file.name);
+      const { error } = await supa.storage.from(bucket).upload(uploadedName, file, { upsert: false });
+      if (error) return toast(error.message, false);
+      const { data: publicUrl } = supa.storage.from(bucket).getPublicUrl(uploadedName);
+      setItemImage(form, publicUrl.publicUrl);
+      toast("Đã upload và gắn ảnh vào mục này");
+    }
+  });
   $("#items").addEventListener("submit", async (event) => {
     const form = event.target.closest(".item-form");
     if (!form) return;
@@ -330,8 +360,15 @@ async function tablePage(kind) {
     if (!error && !id) setTimeout(() => location.reload(), 600);
   });
   $("#items").addEventListener("click", async (event) => {
-    if (!event.target.classList.contains("delete-btn")) return;
     const form = event.target.closest(".item-form");
+    if (!form) return;
+    if (event.target.classList.contains("item-upload-image")) $(".item-upload-input", form)?.click();
+    if (event.target.classList.contains("item-clear-image")) setItemImage(form, "");
+    if (event.target.classList.contains("item-pick-image")) {
+      const url = await pickImageFromLibrary();
+      if (url) setItemImage(form, url);
+    }
+    if (!event.target.classList.contains("delete-btn")) return;
     if (!form.dataset.id || !confirm("Xóa mục này?")) return;
     const { error } = await supa.from(table).delete().eq("id", form.dataset.id);
     toast(error ? error.message : "Đã xóa", !error);
