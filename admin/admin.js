@@ -488,7 +488,7 @@ async function bookingsPage() {
   };
   const currentStatus = new URLSearchParams(location.search).get("status") || "new";
   const statuses = ["new", "confirmed", "cancelled", "done"];
-  const rows = data.map((row) => ({ ...row, status: statuses.includes(row.status) ? row.status : "new" }));
+  const rows = data.filter((row) => row.status !== "deleted").map((row) => ({ ...row, status: statuses.includes(row.status) ? row.status : "new" }));
   const counts = Object.fromEntries(["all", ...statuses].map((status) => [status, status === "all" ? rows.length : rows.filter((row) => row.status === status).length]));
   const filtered = currentStatus === "all" ? rows : rows.filter((row) => row.status === currentStatus);
   const cleanPhone = (value = "") => String(value || "").replace(/[^0-9]/g, "");
@@ -635,9 +635,23 @@ async function bookingsPage() {
     }
     const deleteButton = event.target.closest(".delete-booking");
     if (deleteButton && confirm("Xoá vĩnh viễn yêu cầu đặt bàn này? Thao tác này không khôi phục được.")) {
-      const { error } = await supa.from("booking_requests").delete().eq("id", deleteButton.dataset.id);
-      toast(error ? error.message : "Đã xoá vĩnh viễn", !error);
-      if (!error) setTimeout(() => location.reload(), 450);
+      deleteButton.disabled = true;
+      deleteButton.textContent = "Đang xoá...";
+      const { data: deletedRows, error } = await supa.from("booking_requests").delete().eq("id", deleteButton.dataset.id).select("id");
+      if (error || !deletedRows?.length) {
+        const fallback = await supa.from("booking_requests").update({ status: "deleted" }).eq("id", deleteButton.dataset.id);
+        if (fallback.error) {
+          deleteButton.disabled = false;
+          deleteButton.textContent = "Xoá vĩnh viễn";
+          toast(`Chưa xoá được. Hãy chạy lại supabase/005_booking_requests.sql. ${fallback.error.message || error?.message || ""}`, false);
+          return;
+        }
+        toast("Đã xoá khỏi danh sách. Để xoá cứng trong database, chạy lại file SQL quyền xoá.", true);
+        setTimeout(() => location.reload(), 450);
+        return;
+      }
+      toast("Đã xoá vĩnh viễn", true);
+      setTimeout(() => location.reload(), 450);
     }
   });
 }
