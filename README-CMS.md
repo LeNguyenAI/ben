@@ -55,4 +55,4 @@ Upload toàn bộ thư mục này lên GitHub hoặc Vercel. File `index.html` n
 
 ## Social links
 
-Facebook, TikTok, Instagram đang để trống trong seed. Khi chưa có URL thật, footer sẽ ẩn social để không có link giả.
+Seed đã có sẵn Facebook, TikTok và Instagram chính thức của Bến Chill Garden. Nếu sau này xóa URL trong admin settings, footer sẽ tự ẩn link tương ứng để không có link giả.
