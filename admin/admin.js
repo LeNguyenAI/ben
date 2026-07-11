@@ -480,26 +480,166 @@ async function bookingsPage() {
     body.innerHTML = `<div class="panel"><h2>Chưa sẵn sàng</h2><p class="muted">Hãy chạy file <b>supabase/005_booking_requests.sql</b> trong Supabase để bật lưu đặt bàn.</p><p class="danger-text">${esc(error.message)}</p></div>`;
     return;
   }
-  body.innerHTML = `<div class="content-helper"><div><b>Yêu cầu đặt bàn</b><p class="muted">Khách gửi form sẽ nằm ở đây. Nên gọi hoặc nhắn Zalo xác nhận lại trước khi giữ bàn.</p></div><a class="btn primary" href="tel:0869159615">Gọi hotline</a></div><div class="item-list booking-request-list">${data.length ? data.map((row) => `
-    <article class="panel booking-request-card">
-      <div class="booking-card-head"><div><h2>${esc(row.name || "Khách chưa nhập tên")}</h2><p class="mini">${esc(row.created_at || "")}</p></div><span class="booking-status">${esc(row.status || "new")}</span></div>
-      <div class="booking-info-grid">
-        <p><b>SĐT</b><a href="tel:${esc(row.phone || "")}">${esc(row.phone || "Chưa có")}</a></p>
-        <p><b>Ngày giờ</b>${esc(row.booking_date || "")} ${esc(row.booking_time || "")}</p>
-        <p><b>Số khách</b>${esc(row.guests || "")}</p>
-        <p><b>Khu vực</b>${esc(row.area || "")}</p>
-        <p><b>Nhu cầu</b>${esc(row.booking_type || "")}</p>
-        <p><b>Mục đích</b>${esc(row.purpose || "")}</p>
+  const statusMeta = {
+    new: ["Khách mới", "Cần gọi/Zalo xác nhận"],
+    confirmed: ["Đã xác nhận", "Đã giữ thông tin"],
+    cancelled: ["Đã huỷ", "Không còn giữ bàn"],
+    done: ["Đã xử lý", "Đã hoàn tất"]
+  };
+  const currentStatus = new URLSearchParams(location.search).get("status") || "new";
+  const statuses = ["new", "confirmed", "cancelled", "done"];
+  const rows = data.map((row) => ({ ...row, status: statuses.includes(row.status) ? row.status : "new" }));
+  const counts = Object.fromEntries(["all", ...statuses].map((status) => [status, status === "all" ? rows.length : rows.filter((row) => row.status === status).length]));
+  const filtered = currentStatus === "all" ? rows : rows.filter((row) => row.status === currentStatus);
+  const cleanPhone = (value = "") => String(value || "").replace(/[^0-9]/g, "");
+  const formatDateTime = (row) => [row.booking_date || "", row.booking_time || ""].filter(Boolean).join(" ") || "Chưa chọn";
+  const bookingSummary = (row) => [
+    `Khách: ${row.name || "Chưa nhập tên"}`,
+    `SĐT: ${row.phone || "Chưa có"}`,
+    `Ngày giờ: ${formatDateTime(row)}`,
+    `Số khách: ${row.guests || "Chưa rõ"}`,
+    `Khu vực: ${row.area || "Chưa chọn"}`,
+    `Nhu cầu: ${row.booking_type || "Đặt bàn"}`,
+    row.purpose ? `Mục đích: ${row.purpose}` : "",
+    row.note ? `Ghi chú: ${row.note}` : ""
+  ].filter(Boolean).join("\n");
+  const exportBookings = () => {
+    const headers = [
+      "Trang thai",
+      "Ngay gui",
+      "Ho ten",
+      "So dien thoai",
+      "Ngay dat",
+      "Gio dat",
+      "So khach",
+      "Nhu cau",
+      "Muc dich",
+      "Khu vuc mong muon",
+      "Loai su kien",
+      "Quy mo su kien",
+      "Ngan sach du kien",
+      "Setup / concept",
+      "Ghi chu",
+      "Nguon",
+      "ID"
+    ];
+    const csvValue = (value = "") => `"${String(value ?? "").replace(/"/g, '""').replace(/\r?\n/g, " ").trim()}"`;
+    const lines = rows.map((row) => [
+      statusMeta[row.status]?.[0] || row.status || "",
+      row.created_at ? new Date(row.created_at).toLocaleString("vi-VN") : "",
+      row.name,
+      row.phone,
+      row.booking_date,
+      row.booking_time,
+      row.guests,
+      row.booking_type,
+      row.purpose,
+      row.area,
+      row.event_type,
+      row.event_scale,
+      row.budget,
+      row.concept,
+      row.note,
+      row.source,
+      row.id
+    ].map(csvValue).join(","));
+    const csv = `\uFEFF${headers.map(csvValue).join(",")}\n${lines.join("\n")}`;
+    const url = URL.createObjectURL(new Blob([csv], { type: "text/csv;charset=utf-8" }));
+    const link = document.createElement("a");
+    const stamp = new Date().toISOString().slice(0, 10);
+    link.href = url;
+    link.download = `ben-chill-booking-data-${stamp}.csv`;
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+    URL.revokeObjectURL(url);
+    toast(`Đã xuất ${rows.length} booking ra file Excel`, true);
+  };
+  const renderRow = (row) => {
+    const phone = cleanPhone(row.phone);
+    const eventText = [row.event_type, row.event_scale, row.budget, row.concept].filter(Boolean).join(" · ");
+    return `<article class="booking-row booking-row-${esc(row.status)}">
+      <div class="booking-person">
+        <span class="booking-dot" aria-hidden="true"></span>
+        <div>
+          <h2>${esc(row.name || "Khách chưa nhập tên")}</h2>
+          <p>${esc(row.created_at ? new Date(row.created_at).toLocaleString("vi-VN") : "")}</p>
+        </div>
       </div>
-      ${row.note ? `<p class="booking-note"><b>Ghi chú</b>${esc(row.note)}</p>` : ""}
-      ${row.event_type || row.event_scale || row.budget || row.concept ? `<p class="booking-note"><b>Sự kiện</b>${esc([row.event_type, row.event_scale, row.budget, row.concept].filter(Boolean).join(" · "))}</p>` : ""}
-      <div class="toolbar"><a class="btn primary" href="tel:${esc(row.phone || "")}">Gọi khách</a><a class="btn" href="https://zalo.me/${esc(String(row.phone || "").replace(/[^0-9]/g, ""))}" target="_blank" rel="noopener noreferrer">Nhắn Zalo</a><button class="btn mark-booking" data-id="${esc(row.id)}" type="button">Đã xử lý</button></div>
-    </article>`).join("") : `<div class="empty-card"><h2>Chưa có đặt bàn</h2><p class="muted">Khi khách gửi form, thông tin sẽ hiện ở đây.</p></div>`}</div>`;
-  $$(".mark-booking").forEach((button) => button.addEventListener("click", async () => {
-    const { error } = await supa.from("booking_requests").update({ status: "done" }).eq("id", button.dataset.id);
-    toast(error ? error.message : "Đã đánh dấu xử lý", !error);
-    if (!error) setTimeout(() => location.reload(), 500);
-  }));
+      <div class="booking-details">
+        <span><b>SĐT</b><a href="tel:${esc(phone || row.phone || "")}">${esc(row.phone || "Chưa có")}</a></span>
+        <span><b>Ngày giờ</b>${esc(formatDateTime(row))}</span>
+        <span><b>Số khách</b>${esc(row.guests || "Chưa rõ")}</span>
+        <span><b>Khu vực</b>${esc(row.area || "Chưa chọn")}</span>
+        <span><b>Nhu cầu</b>${esc(row.booking_type || "Đặt bàn")}</span>
+        <span><b>Mục đích</b>${esc(row.purpose || "Chưa ghi")}</span>
+        ${row.note ? `<span class="booking-wide"><b>Ghi chú</b>${esc(row.note)}</span>` : ""}
+        ${eventText ? `<span class="booking-wide"><b>Sự kiện</b>${esc(eventText)}</span>` : ""}
+      </div>
+      <div class="booking-actions">
+        <span class="booking-status-label">${esc(statusMeta[row.status][0])}</span>
+        <a class="btn primary" href="tel:${esc(phone || row.phone || "")}">Gọi</a>
+        <a class="btn" href="https://zalo.me/${esc(phone)}" target="_blank" rel="noopener noreferrer">Zalo</a>
+        <button class="btn copy-booking" data-copy="${esc(bookingSummary(row))}" type="button">Copy</button>
+        ${row.status !== "confirmed" ? `<button class="btn booking-status-action" data-id="${esc(row.id)}" data-status="confirmed" type="button">Xác nhận</button>` : ""}
+        ${row.status !== "cancelled" ? `<button class="btn booking-status-action" data-id="${esc(row.id)}" data-status="cancelled" type="button">Huỷ</button>` : ""}
+        ${row.status !== "done" ? `<button class="btn booking-status-action" data-id="${esc(row.id)}" data-status="done" type="button">Đã xử lý</button>` : ""}
+        <button class="btn danger delete-booking" data-id="${esc(row.id)}" type="button">Xoá vĩnh viễn</button>
+      </div>
+    </article>`;
+  };
+  body.innerHTML = `<section class="booking-manager">
+    <div class="booking-board-head">
+      <div>
+        <span class="content-kicker">BOOKING MANAGER</span>
+        <h2>${counts.new ? `Có ${counts.new} khách mới cần xác nhận` : "Không có khách mới"}</h2>
+        <p class="muted">Form đặt bàn đã lưu vào admin. Khi có khách mới, tab <b>Khách mới</b> sẽ tăng số lượng để bạn vào gọi hoặc nhắn Zalo xác nhận.</p>
+        <div class="booking-export-row">
+          <button class="btn primary export-bookings" type="button">Xuất Excel</button>
+          <span>Xuất toàn bộ ${counts.all} khách để lưu trữ, chăm sóc lại hoặc chạy marketing.</span>
+        </div>
+      </div>
+      <div class="booking-notice">
+        <b>Thông báo tự động</b>
+        <span>Muốn gửi email/Zalo tự động cần bật thêm webhook riêng. Bản này đã sẵn sàng dữ liệu để kết nối bước tiếp theo.</span>
+      </div>
+    </div>
+    <nav class="booking-tabs" aria-label="Lọc đặt bàn">
+      <a class="${currentStatus === "all" ? "active" : ""}" href="/admin/bookings/?status=all">Tất cả <b>${counts.all}</b></a>
+      ${statuses.map((status) => `<a class="${currentStatus === status ? "active" : ""}" href="/admin/bookings/?status=${status}">${esc(statusMeta[status][0])} <b>${counts[status]}</b></a>`).join("")}
+    </nav>
+    <div class="booking-status-guide">
+      ${statuses.map((status) => `<div><b>${esc(statusMeta[status][0])}</b><span>${esc(statusMeta[status][1])}</span></div>`).join("")}
+    </div>
+    <div class="booking-table">
+      ${filtered.length ? filtered.map(renderRow).join("") : `<div class="empty-card"><h2>Chưa có dữ liệu trong mục này</h2><p class="muted">Khi khách gửi form hoặc khi bạn đổi trạng thái, danh sách sẽ tự phân loại tại đây.</p></div>`}
+    </div>
+  </section>`;
+  body.addEventListener("click", async (event) => {
+    if (event.target.closest(".export-bookings")) {
+      exportBookings();
+      return;
+    }
+    const copyButton = event.target.closest(".copy-booking");
+    if (copyButton) {
+      await navigator.clipboard.writeText(copyButton.dataset.copy || "");
+      toast("Đã copy thông tin khách", true);
+      return;
+    }
+    const statusButton = event.target.closest(".booking-status-action");
+    if (statusButton) {
+      const { error } = await supa.from("booking_requests").update({ status: statusButton.dataset.status }).eq("id", statusButton.dataset.id);
+      toast(error ? error.message : "Đã cập nhật trạng thái", !error);
+      if (!error) setTimeout(() => location.reload(), 450);
+      return;
+    }
+    const deleteButton = event.target.closest(".delete-booking");
+    if (deleteButton && confirm("Xoá vĩnh viễn yêu cầu đặt bàn này? Thao tác này không khôi phục được.")) {
+      const { error } = await supa.from("booking_requests").delete().eq("id", deleteButton.dataset.id);
+      toast(error ? error.message : "Đã xoá vĩnh viễn", !error);
+      if (!error) setTimeout(() => location.reload(), 450);
+    }
+  });
 }
 
 async function settingsPage() {

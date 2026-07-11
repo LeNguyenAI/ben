@@ -40,6 +40,11 @@ create policy "Authenticated admins can update booking requests"
   using (auth.role() = 'authenticated')
   with check (auth.role() = 'authenticated');
 
+drop policy if exists "Authenticated admins can delete booking requests" on public.booking_requests;
+create policy "Authenticated admins can delete booking requests"
+  on public.booking_requests for delete
+  using (auth.role() = 'authenticated');
+
 create or replace function public.set_booking_requests_updated_at()
 returns trigger
 language plpgsql
