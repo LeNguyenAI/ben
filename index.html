@@ -93,6 +93,15 @@
     .menu-feature-grid .menu-card:nth-child(n+3) div{padding:14px 2px 0}
     .menu-feature-grid .menu-card:nth-child(n+3) strong{font-size:.88rem;color:#ddc687}
     .gallery-note{margin:18px 0 0;color:#b7b09f;font-size:.92rem}
+    .video-grid{max-width:980px;margin:0 auto;grid-template-columns:repeat(2,minmax(0,1fr))!important;gap:12px!important}
+    .video-card{min-height:0!important;aspect-ratio:16/9;border-radius:18px!important;background:#050b08!important;box-shadow:none!important}
+    .video-card:first-child{grid-column:1/-1;aspect-ratio:21/9}
+    .video-card img{width:100%;height:100%!important;aspect-ratio:auto!important;filter:saturate(.95) contrast(.98)}
+    .video-card .play{border:0;padding:0;cursor:pointer;background:linear-gradient(180deg,rgba(0,0,0,.06),rgba(0,0,0,.52))}
+    .video-card .play span{width:56px;height:56px;background:rgba(255,255,255,.18);border:1px solid rgba(255,255,255,.34);box-shadow:0 14px 34px rgba(0,0,0,.28)}
+    .video-card:first-child .play span{width:62px;height:62px}
+    .video-card p{left:0!important;right:0!important;bottom:0!important;margin:0!important;padding:42px 18px 16px!important;background:linear-gradient(180deg,transparent,rgba(0,0,0,.76));color:#fff8e7!important;font-size:.96rem;line-height:1.35}
+    .video-card:hover{transform:translateY(-3px)}
     @media(max-width:760px){
       body{padding-bottom:96px!important}
       .container{width:min(100% - 28px,var(--max))!important}
@@ -120,8 +129,10 @@
       .checks span{font-size:.95rem}
       .gallery{grid-template-columns:1fr 1fr!important;grid-auto-rows:150px!important;gap:8px!important}
       .gallery img{border-radius:12px!important}
-      .video-grid{grid-template-columns:1fr!important}
-      .video-card{min-height:210px!important}
+      .video-grid{max-width:100%;grid-template-columns:1fr!important;gap:12px!important}
+      .video-card,.video-card:first-child{grid-column:auto;aspect-ratio:16/9;min-height:0!important;border-radius:15px!important}
+      .video-card .play span,.video-card:first-child .play span{width:50px;height:50px}
+      .video-card p{padding:36px 14px 13px!important;font-size:.92rem}
       .personal-media{min-height:300px!important}
       .personal-copy h2,.b2b-section h2,.menu-card h3{word-break:normal}
       .personal-list{grid-template-columns:1fr!important;gap:18px!important}
