@@ -210,7 +210,10 @@
     }).join("");
     grid.querySelectorAll(".cms-video-card").forEach((card) => {
       const item = data.find((row) => row.id === card.dataset.videoId);
-      card.querySelector(".play")?.addEventListener("click", () => openVideo(item));
+      card.addEventListener("click", (event) => {
+        event.preventDefault();
+        openVideo(item);
+      });
     });
   }
 
