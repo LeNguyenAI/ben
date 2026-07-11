@@ -269,8 +269,9 @@ async function tablePage(kind) {
 async function videosPage() {
   const body = shell("Video", "Thêm video thật cho tab Video. YouTube/Vimeo tự chuyển sang embed, TikTok/Facebook mở tab mới khi cần.");
   if (!body || !(await requireAdmin())) return;
-  const { data = [] } = await supa.from("video_items").select("*").order("sort_order", { ascending: true });
-  body.innerHTML = `<div class="toolbar" style="margin-bottom:16px"><button class="btn primary" id="addVideo">Thêm video</button></div><div class="item-list" id="videoItems"></div>`;
+  const { data, error: loadError } = await supa.from("video_items").select("*").order("sort_order", { ascending: true });
+  const rows = Array.isArray(data) ? data : [];
+  body.innerHTML = `<div class="toolbar" style="margin-bottom:16px"><button class="btn primary" id="addVideo" type="button">Thêm video</button></div>${loadError ? `<div class="panel" style="margin-bottom:16px"><h2>Chưa sẵn sàng</h2><p class="muted">Nếu đây là lần đầu dùng Video, hãy chạy file <b>supabase/004_video_manager.sql</b> trong Supabase trước khi lưu. Bạn vẫn có thể bấm “Thêm video” để xem form nhập.</p><p class="danger-text">${esc(loadError.message || "")}</p></div>` : ""}<div class="item-list" id="videoItems"></div>`;
   const render = (items) => {
     $("#videoItems").innerHTML = items.map((row) => `
       <form class="panel video-form" data-id="${row.id || ""}">
@@ -293,8 +294,8 @@ async function videosPage() {
         <div class="row"><button class="btn danger delete-video" type="button">Xóa</button><button class="btn primary">Lưu video</button></div>
       </form>`).join("");
   };
-  render(data);
-  $("#addVideo").addEventListener("click", () => render([{ title: "", video_type: "youtube", category: "video", sort_order: data.length + 1, is_visible: true, muted: true, autoplay: false }, ...data]));
+  render(rows);
+  $("#addVideo").addEventListener("click", () => render([{ title: "", video_type: "youtube", category: "video", sort_order: rows.length + 1, is_visible: true, muted: true, autoplay: false }, ...rows]));
   const updateFormPreview = (form) => {
     const type = form.video_type.value;
     const result = normalizeVideo(type, form.video_url.value);
