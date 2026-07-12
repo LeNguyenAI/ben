@@ -194,10 +194,34 @@
     .lightbox.open{animation:modalFade .2s ease both}.lightbox.open img,.video-modal.open .video-modal-frame{animation:modalLift .28s cubic-bezier(.2,.7,.18,1) both}
     @keyframes modalFade{from{opacity:0}to{opacity:1}}@keyframes modalLift{from{opacity:0;transform:translateY(10px) scale(.985)}to{opacity:1;transform:none}}
     .scroll-cue{animation:cueFloat 1.8s ease-in-out infinite}@keyframes cueFloat{50%{transform:translateY(5px)}}
+    .back-top{position:fixed!important;right:22px!important;bottom:96px!important;display:none;align-items:center!important;justify-content:center!important;line-height:1!important;padding:0!important;overflow:visible!important}
+    .back-top.show{display:flex!important}
+    .closing-inner{max-width:940px!important}
+    .closing-inner h2{max-width:900px!important;font-size:clamp(2.55rem,5.1vw,4.55rem)!important;line-height:1.04!important;text-wrap:balance}
+    .closing-inner p{max-width:650px!important}
+    h1,h2,.brand-message,.lead,.personal-lead,.quote-section p{text-wrap:balance}
+    .quote-section p{max-width:1180px!important;font-size:clamp(2rem,4.05vw,4.05rem)!important;line-height:1.16!important}
+    .quote-section .quote-line{display:block;white-space:nowrap}
+    footer{background:#060d0a!important;padding:48px 0 56px!important;box-shadow:0 120px 0 120px #060d0a}
+    .footer-grid{align-items:start!important;padding-bottom:24px!important}
+    .footer-brand{display:grid!important;grid-template-columns:72px minmax(0,1fr)!important;column-gap:14px!important;row-gap:2px!important;align-items:center!important;max-width:420px}
+    .footer-brand img{grid-row:1 / span 2!important;width:72px!important;height:72px!important;margin:0!important}
+    .footer-brand strong{margin:0!important;line-height:1.14!important}
+    .footer-brand p{margin:0!important;line-height:1.42!important}
+    .copyright{padding-top:22px!important;margin-top:6px!important;text-align:left}
     @media(prefers-reduced-motion:reduce){
       .motion-ready .hero .eyebrow,.motion-ready .hero h1,.motion-ready .hero p,.motion-ready .hero-actions,.motion-ready .hero-logo,.tab-panel.active,.lightbox.open,.lightbox.open img,.video-modal.open .video-modal-frame,details[open] p,.back-top.show,.scroll-cue{animation:none!important}
       .motion-child,.image-reveal{opacity:1!important;transform:none!important;clip-path:none!important}
       .card:hover img,.menu-card:hover img,.gallery img:hover,.video-card:hover img{transform:none!important}
+    }
+    @media(max-width:760px){
+      .quote-section p{max-width:430px!important;font-size:clamp(1.55rem,7vw,2.25rem)!important;line-height:1.2!important}
+      .quote-section .quote-line{white-space:normal}
+      .closing-inner h2{font-size:clamp(2.12rem,10vw,3.1rem)!important;max-width:390px!important}
+      footer{padding-bottom:128px!important}
+      .footer-brand{grid-template-columns:64px minmax(0,1fr)!important;column-gap:12px!important}
+      .footer-brand img{width:64px!important;height:64px!important}
+      .back-top{right:14px!important;bottom:88px!important}
     }
   </style>
 </head>
@@ -213,7 +237,7 @@
     <section class="hero"><div class="container hero-grid"><div class="hero-copy"><span class="eyebrow">Riverside Garden - Thanh Đa</span><h1><span class="brand-title">Bến Chill Garden</span><span class="brand-message">Chill bên sông. Trọn từng khoảnh khắc.</span></h1><p>Một góc sân vườn ven sông để ngắm Landmark 81, ăn tối cùng người thương, gặp bạn bè và tổ chức những buổi vui vừa đủ riêng tư.</p><div class="hero-actions"><a class="btn primary" href="#booking">Giữ bàn đẹp</a><a class="btn secondary" href="https://www.google.com/maps/place/B%E1%BA%BFn+Chill+Garden/@10.8111234,106.7182749,16z/data=!3m1!4b1!4m6!3m5!1s0x3175290069e851d3:0x35d2839f1e7152b6!8m2!3d10.8111181!4d106.7208498!16s%2Fg%2F11zgqbbg63?entry=ttu&g_ep=EgoyMDI2MDcwOC4wIKXMDSoASAFQAw%3D%3D" target="_blank" rel="noopener noreferrer">Chỉ đường</a></div></div><aside class="hero-logo"><img src="./ben-chill-logo.png" alt="Logo Bến Chill Garden" width="220" height="220" /></aside></div></section>
     <section class="strip"><div class="container strip-grid"><div><b>Ven sông Thanh Đa</b><span>Không gian xanh, nhiều góc ngồi thoáng</span></div><div><b>Góc ngắm Landmark 81</b><span>Đẹp nhất vào chiều tối</span></div><div><b>Tiệc và nhóm đông</b><span>Sinh nhật, liên hoan, họp mặt</span></div><div><b>Food & Beer</b><span>Món ăn chia sẻ, bia lạnh, đồ uống</span></div></div></section>
     <section class="section" id="about"><div class="container split"><div class="image-stack"><img class="main-photo" src="./assets/cover-main.jpg" alt="Không gian Bến Chill Garden ven sông" width="1600" height="608" loading="lazy"><div class="note"><b>Một chiếc hẹn khác giữa Thanh Đa</b><p>Gió sông, cây xanh và ánh chiều xuống chậm. Nhà Bến là nơi mọi người có thể ngồi lâu hơn một chút, ăn ngon và kể nhau nghe thêm vài câu chuyện.</p></div></div><div class="copy"><span class="eyebrow">Câu chuyện Nhà Bến</span><h2>Một nơi để gặp nhau, không phải chỉ để ghé qua</h2><p>Bến Chill Garden được tạo nên cho những cuộc hẹn đời thường: một bữa tối cùng gia đình, buổi gặp cuối tuần với bạn bè hay một dịp đặc biệt cần không gian riêng. Mỗi khu vực đều được sắp xếp để khách cảm thấy thoải mái, dễ trò chuyện và không bị gò bó.</p><div class="checks"><span>Không gian sân vườn thoáng, gần sông và nhiều cây xanh.</span><span>Có khu vực phù hợp cho nhóm nhỏ, gia đình và nhóm đông.</span><span>Hỗ trợ chọn khu ngồi, menu và setup theo nhu cầu.</span></div></div></div></section>
-    <section class="quote-section"><div class="container"><p>“Có những nơi người ta đến&nbsp;để&nbsp;ăn.<br>Có những nơi người ta ở lại vì khung cảnh.”</p></div></section>
+    <section class="quote-section"><div class="container"><p><span class="quote-line">“Có những nơi người ta đến&nbsp;để&nbsp;ăn.</span><span class="quote-line">Có những nơi người ta ở lại vì khung cảnh.”</span></p></div></section>
     <section class="section soft" id="spaces"><div class="container"><div class="head"><span class="eyebrow">Không gian</span><h2>Đi bao nhiêu người cũng có một góc phù hợp</h2><p class="lead">Từ bàn ven sông cho buổi hẹn nhẹ nhàng đến khu sân vườn rộng rãi cho gia đình, nhóm bạn và tiệc riêng.</p></div><div class="grid"><article class="card"><img src="./assets/space-01.jpg" alt="Khu ven sông" width="1600" height="1200" loading="lazy"><div><span class="tag">Ngắm hoàng hôn</span><h3>Khu ven sông</h3><p>Góc ngồi thoáng, hợp cho cặp đôi, nhóm nhỏ và những buổi tối muốn nhìn thành phố lên đèn.</p></div></article><article class="card"><img src="./assets/space-02.jpg" alt="Khu sân vườn" width="1600" height="1200" loading="lazy"><div><span class="tag">Gia đình & bạn bè</span><h3>Khu sân vườn</h3><p>Bàn rộng, lối đi thoáng, dễ ngồi lâu cho bữa tối cuối tuần cùng người thân.</p></div></article><article class="card"><img src="./assets/event-01.jpg" alt="Khu tiệc riêng" width="1600" height="1200" loading="lazy"><div><span class="tag">Nhóm đông</span><h3>Khu tiệc riêng</h3><p>Sắp xếp linh hoạt cho sinh nhật, liên hoan, họp mặt và các chương trình riêng.</p></div></article></div></div></section>
     <section class="sunset-section" id="sunset"><div class="container sunset-content"><span class="eyebrow">Sunset At Nhà Bến</span><h2>Một góc ngắm Landmark 81 từ bên kia sông</h2><p>Tầm chiều xuống, Landmark 81 hiện ra giữa ánh hoàng hôn và mặt sông. Đây là một trong những góc đẹp nhất để bắt đầu buổi tối tại Nhà Bến.</p><div class="hero-actions"><a class="btn primary" href="#booking">Giữ bàn ven sông</a></div></div></section>
     <section class="section" id="gallery"><div class="container"><div class="head"><span class="eyebrow">Hình ảnh & video</span><h2>Không gian chill là điểm nhấn của Nhà Bến</h2><p class="lead">Những góc ven sông, bàn tiệc, món ăn và khoảnh khắc khách hàng trong không khí sân vườn.</p></div><div class="gallery-tabs"><button class="tab-btn active" data-tab="space">Không gian chill</button><button class="tab-btn" data-tab="guest">Hình khách</button><button class="tab-btn" data-tab="food">Food & Beer</button><button class="tab-btn" data-tab="event">Tiệc & đêm chill</button><button class="tab-btn" data-tab="video">Video</button></div>
