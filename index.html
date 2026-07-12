@@ -170,6 +170,35 @@
       .strip b{font-size:.84rem!important}.strip span{font-size:.78rem!important}
       .gallery{grid-auto-rows:132px!important}
     }
+    .motion-ready .hero .eyebrow,.motion-ready .hero h1,.motion-ready .hero p,.motion-ready .hero-actions,.motion-ready .hero-logo{animation:heroRise .72s cubic-bezier(.2,.72,.18,1) both}
+    .motion-ready .hero h1{animation-delay:.08s}.motion-ready .hero p{animation-delay:.16s}.motion-ready .hero-actions{animation-delay:.24s}.motion-ready .hero-logo{animation-delay:.18s}
+    @keyframes heroRise{from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:none}}
+    .btn,.tab-btn,.mode-btn,.menu-btn,.back-top,.floating-contact a,.mobile-cta a{position:relative;overflow:hidden;will-change:transform}
+    .btn:after,.mode-btn:after{content:"";position:absolute;inset:-40% auto -40% -70%;width:48%;background:linear-gradient(90deg,transparent,rgba(255,255,255,.28),transparent);transform:skewX(-18deg);opacity:0;pointer-events:none}
+    .btn:hover:after,.mode-btn:hover:after{animation:buttonSheen .72s ease}
+    @keyframes buttonSheen{0%{left:-70%;opacity:0}18%{opacity:.7}100%{left:120%;opacity:0}}
+    .motion-child{opacity:0;transform:translateY(18px);transition:opacity .62s cubic-bezier(.2,.7,.18,1),transform .62s cubic-bezier(.2,.7,.18,1)}
+    .motion-child.visible{opacity:1;transform:none}
+    .image-reveal{opacity:.001;clip-path:inset(0 0 18% 0 round 18px);transform:scale(1.018);transition:opacity .68s cubic-bezier(.2,.7,.18,1),clip-path .78s cubic-bezier(.2,.7,.18,1),transform .78s cubic-bezier(.2,.7,.18,1)}
+    .image-reveal.visible{opacity:1;clip-path:inset(0 0 0 0 round 18px);transform:none}
+    .card img,.menu-card img,.gallery img,.video-card img,.main-photo,.personal-media img,.b2b-image img{transition:transform .58s cubic-bezier(.2,.7,.18,1),filter .58s ease}
+    .card:hover img,.menu-card:hover img,.gallery img:hover,.video-card:hover img{transform:scale(1.025);filter:saturate(1.04) contrast(1.02)}
+    .gallery img{cursor:zoom-in;will-change:transform}
+    .gallery img:hover{box-shadow:0 18px 48px rgba(0,0,0,.24)}
+    .tab-panel.active{animation:tabFade .34s cubic-bezier(.2,.7,.18,1) both}
+    @keyframes tabFade{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+    details[open] p{animation:faqDrop .24s ease both}
+    @keyframes faqDrop{from{opacity:0;transform:translateY(-4px)}to{opacity:1;transform:none}}
+    .back-top.show{animation:backTopIn .22s ease both}
+    @keyframes backTopIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+    .lightbox.open{animation:modalFade .2s ease both}.lightbox.open img,.video-modal.open .video-modal-frame{animation:modalLift .28s cubic-bezier(.2,.7,.18,1) both}
+    @keyframes modalFade{from{opacity:0}to{opacity:1}}@keyframes modalLift{from{opacity:0;transform:translateY(10px) scale(.985)}to{opacity:1;transform:none}}
+    .scroll-cue{animation:cueFloat 1.8s ease-in-out infinite}@keyframes cueFloat{50%{transform:translateY(5px)}}
+    @media(prefers-reduced-motion:reduce){
+      .motion-ready .hero .eyebrow,.motion-ready .hero h1,.motion-ready .hero p,.motion-ready .hero-actions,.motion-ready .hero-logo,.tab-panel.active,.lightbox.open,.lightbox.open img,.video-modal.open .video-modal-frame,details[open] p,.back-top.show,.scroll-cue{animation:none!important}
+      .motion-child,.image-reveal{opacity:1!important;transform:none!important;clip-path:none!important}
+      .card:hover img,.menu-card:hover img,.gallery img:hover,.video-card:hover img{transform:none!important}
+    }
   </style>
 </head>
 <body>
@@ -209,18 +238,21 @@
   <div class="mobile-cta"><a class="pulse-link" href="tel:0869159615">Gọi ngay</a><a class="pulse-link" href="https://zalo.me/0869159615" target="_blank" rel="noopener noreferrer">Zalo</a><a href="#booking">Đặt bàn</a></div>
   <script>
     const links=document.getElementById("links");const siteNav=document.getElementById("siteNav");const menuBtn=document.getElementById("menuBtn");const backTop=document.getElementById("backTop");const reduceMotion=window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    document.documentElement.classList.add("motion-ready");
     document.querySelectorAll("main section, .closing-cta").forEach((section)=>section.classList.add("reveal"));
+    document.querySelectorAll(".head,.copy,.booking,.contact-grid > div,.footer-grid > div,.strip-grid > div,.checks span,.personal-item,.b2b-item,.format-strip > div,.event-tile,.menu-card,.card,.video-card,.faq-list details").forEach((el,index)=>{el.classList.add("motion-child");el.style.transitionDelay=`${Math.min(index%5*55,220)}ms`});
+    document.querySelectorAll(".main-photo,.card img,.menu-card img,.gallery img,.event-img,.personal-media,.b2b-image img,.contact-grid iframe,.hero-logo").forEach((el)=>el.classList.add("image-reveal"));
     const setNavState=()=>{siteNav.classList.toggle("scrolled",window.scrollY>24);backTop.classList.toggle("show",window.scrollY>700);if(!reduceMotion){document.querySelector(".sunset-section")?.style.setProperty("--sunset-shift",`${Math.min(26,Math.max(-26,(window.scrollY-window.innerHeight)*.025))}px`)}};
     setNavState();window.addEventListener("scroll",setNavState,{passive:true});backTop.addEventListener("click",()=>window.scrollTo({top:0,behavior:reduceMotion?"auto":"smooth"}));
     menuBtn.addEventListener("click",()=>{const isOpen=links.classList.toggle("open");menuBtn.setAttribute("aria-expanded",String(isOpen))});links.querySelectorAll("a").forEach((link)=>link.addEventListener("click",()=>{links.classList.remove("open");menuBtn.setAttribute("aria-expanded","false")}));
     const navTargets=[...links.querySelectorAll("a[href^='#']")].map((a)=>({a,section:document.querySelector(a.getAttribute("href"))})).filter((item)=>item.section);
     const navObserver=new IntersectionObserver((entries)=>{entries.forEach((entry)=>{if(entry.isIntersecting){navTargets.forEach(({a})=>a.classList.remove("active"));const active=navTargets.find((item)=>item.section===entry.target);active?.a.classList.add("active")}})},{rootMargin:"-35% 0px -55% 0px",threshold:0});
     navTargets.forEach(({section})=>navObserver.observe(section));
-    const revealObserver=new IntersectionObserver((entries)=>entries.forEach((entry)=>{if(entry.isIntersecting){entry.target.classList.add("visible");revealObserver.unobserve(entry.target)}}),{threshold:.12});
-    document.querySelectorAll(".reveal").forEach((el)=>revealObserver.observe(el));
+    const revealObserver=new IntersectionObserver((entries)=>entries.forEach((entry)=>{if(entry.isIntersecting){entry.target.classList.add("visible");revealObserver.unobserve(entry.target)}}),{threshold:.12,rootMargin:"0px 0px -8% 0px"});
+    document.querySelectorAll(".reveal,.motion-child,.image-reveal").forEach((el)=>revealObserver.observe(el));
     document.querySelectorAll(".tab-btn").forEach((btn)=>btn.addEventListener("click",()=>{document.querySelectorAll(".tab-btn").forEach((b)=>b.classList.remove("active"));document.querySelectorAll(".tab-panel").forEach((p)=>p.classList.remove("active"));btn.classList.add("active");document.getElementById(`tab-${btn.dataset.tab}`).classList.add("active")}));
     document.querySelectorAll(".faq-list details").forEach((item)=>item.addEventListener("toggle",()=>{if(item.open){document.querySelectorAll(".faq-list details").forEach((other)=>{if(other!==item)other.open=false})}}));
-    const lightbox=document.getElementById("lightbox");const lightboxImg=lightbox.querySelector("img");const lightboxCaption=lightbox.querySelector(".lightbox-caption");let galleryImages=[];let galleryIndex=0;const openLightbox=(index)=>{galleryImages=[...document.querySelectorAll(".tab-panel.active .gallery img")];galleryIndex=index;const img=galleryImages[galleryIndex];if(!img)return;lightboxImg.src=img.src;lightboxImg.alt=img.alt;lightboxCaption.textContent=img.alt;lightbox.classList.add("open");lightbox.setAttribute("aria-hidden","false")};const closeLightbox=()=>{lightbox.classList.remove("open");lightbox.setAttribute("aria-hidden","true");lightboxImg.src=""};const moveLightbox=(step)=>{if(!galleryImages.length)return;galleryIndex=(galleryIndex+step+galleryImages.length)%galleryImages.length;openLightbox(galleryIndex)};document.querySelectorAll(".gallery img").forEach((img)=>img.addEventListener("click",()=>openLightbox([...document.querySelectorAll(".tab-panel.active .gallery img")].indexOf(img))));lightbox.querySelector(".lightbox-close").addEventListener("click",closeLightbox);lightbox.querySelector(".lightbox-prev").addEventListener("click",()=>moveLightbox(-1));lightbox.querySelector(".lightbox-next").addEventListener("click",()=>moveLightbox(1));lightbox.addEventListener("click",(event)=>{if(event.target===lightbox)closeLightbox()});window.addEventListener("keydown",(event)=>{if(!lightbox.classList.contains("open"))return;if(event.key==="Escape")closeLightbox();if(event.key==="ArrowLeft")moveLightbox(-1);if(event.key==="ArrowRight")moveLightbox(1)});
+    const lightbox=document.getElementById("lightbox");const lightboxImg=lightbox.querySelector("img");const lightboxCaption=lightbox.querySelector(".lightbox-caption");let galleryImages=[];let galleryIndex=0;const openLightbox=(index)=>{galleryImages=[...document.querySelectorAll(".tab-panel.active .gallery img")];galleryIndex=index;const img=galleryImages[galleryIndex];if(!img)return;lightboxImg.src=img.currentSrc||img.src;lightboxImg.alt=img.alt;lightboxCaption.textContent=img.alt;lightbox.classList.add("open");lightbox.setAttribute("aria-hidden","false");document.body.style.overflow="hidden"};const closeLightbox=()=>{lightbox.classList.remove("open");lightbox.setAttribute("aria-hidden","true");lightboxImg.src="";document.body.style.overflow=""};const moveLightbox=(step)=>{if(!galleryImages.length)return;galleryIndex=(galleryIndex+step+galleryImages.length)%galleryImages.length;openLightbox(galleryIndex)};document.addEventListener("click",(event)=>{const img=event.target.closest(".tab-panel.active .gallery img");if(!img)return;openLightbox([...document.querySelectorAll(".tab-panel.active .gallery img")].indexOf(img))});lightbox.querySelector(".lightbox-close").addEventListener("click",closeLightbox);lightbox.querySelector(".lightbox-prev").addEventListener("click",()=>moveLightbox(-1));lightbox.querySelector(".lightbox-next").addEventListener("click",()=>moveLightbox(1));lightbox.addEventListener("click",(event)=>{if(event.target===lightbox)closeLightbox()});window.addEventListener("keydown",(event)=>{if(!lightbox.classList.contains("open"))return;if(event.key==="Escape")closeLightbox();if(event.key==="ArrowLeft")moveLightbox(-1);if(event.key==="ArrowRight")moveLightbox(1)});
     const bookingForm=document.getElementById("bookingForm");const bookingType=bookingForm.querySelector("[name='bookingType']");const eventFields=document.getElementById("eventFields");const formError=document.getElementById("formError");const successActions=document.getElementById("successActions");const submitBtn=document.getElementById("submitBtn");
     const setBookingMode=(mode)=>{const target=document.querySelector(`.mode-btn[data-mode="${mode}"]`);if(!target)return;document.querySelectorAll(".mode-btn").forEach((b)=>b.classList.remove("active"));target.classList.add("active");const isEvent=mode==="event";eventFields.hidden=!isEvent;bookingType.value=isEvent?"Tư vấn tiệc / sự kiện":"Đặt bàn ăn uống";eventFields.querySelectorAll("select,input").forEach((field)=>field.required=isEvent)};
     document.querySelectorAll(".mode-btn").forEach((btn)=>btn.addEventListener("click",()=>setBookingMode(btn.dataset.mode)));
