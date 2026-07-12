@@ -179,6 +179,12 @@
     @keyframes buttonSheen{0%{left:-70%;opacity:0}18%{opacity:.7}100%{left:120%;opacity:0}}
     .motion-child{opacity:0;transform:translateY(18px);transition:opacity .62s cubic-bezier(.2,.7,.18,1),transform .62s cubic-bezier(.2,.7,.18,1)}
     .motion-child.visible{opacity:1;transform:none}
+    .text-reveal{opacity:0;transform:translateY(16px);filter:blur(4px);transition:opacity .64s cubic-bezier(.2,.72,.16,1),transform .64s cubic-bezier(.2,.72,.16,1),filter .64s ease;transition-delay:var(--text-delay,0ms);will-change:opacity,transform,filter}
+    .text-reveal.visible{opacity:1;transform:none;filter:blur(0)}
+    .eyebrow.text-reveal{transform:translateY(10px);transition-duration:.48s}
+    h1.text-reveal,h2.text-reveal{transform:translateY(18px);transition-duration:.74s}
+    p.text-reveal,.lead.text-reveal{transition-duration:.58s}
+    .hero-actions.text-reveal,.quick.text-reveal,.menu-actions.text-reveal{transition-duration:.54s}
     .image-reveal{opacity:.001;clip-path:inset(0 0 18% 0 round 18px);transform:scale(1.018);transition:opacity .68s cubic-bezier(.2,.7,.18,1),clip-path .78s cubic-bezier(.2,.7,.18,1),transform .78s cubic-bezier(.2,.7,.18,1)}
     .image-reveal.visible{opacity:1;clip-path:inset(0 0 0 0 round 18px);transform:none}
     .card img,.menu-card img,.gallery img,.video-card img,.main-photo,.personal-media img,.b2b-image img{transition:transform .58s cubic-bezier(.2,.7,.18,1),filter .58s ease}
@@ -211,7 +217,7 @@
     .copyright{padding-top:22px!important;margin-top:6px!important;text-align:left}
     @media(prefers-reduced-motion:reduce){
       .motion-ready .hero .eyebrow,.motion-ready .hero h1,.motion-ready .hero p,.motion-ready .hero-actions,.motion-ready .hero-logo,.tab-panel.active,.lightbox.open,.lightbox.open img,.video-modal.open .video-modal-frame,details[open] p,.back-top.show,.scroll-cue{animation:none!important}
-      .motion-child,.image-reveal{opacity:1!important;transform:none!important;clip-path:none!important}
+      .motion-child,.image-reveal,.text-reveal{opacity:1!important;transform:none!important;clip-path:none!important;filter:none!important}
       .card:hover img,.menu-card:hover img,.gallery img:hover,.video-card:hover img{transform:none!important}
     }
     @media(max-width:760px){
@@ -265,6 +271,7 @@
     document.documentElement.classList.add("motion-ready");
     document.querySelectorAll("main section, .closing-cta").forEach((section)=>section.classList.add("reveal"));
     document.querySelectorAll(".head,.copy,.booking,.contact-grid > div,.footer-grid > div,.strip-grid > div,.checks span,.personal-item,.b2b-item,.format-strip > div,.event-tile,.menu-card,.card,.video-card,.faq-list details").forEach((el,index)=>{el.classList.add("motion-child");el.style.transitionDelay=`${Math.min(index%5*55,220)}ms`});
+    document.querySelectorAll(".hero .eyebrow,.hero h1,.hero p,.hero .hero-actions,.head .eyebrow,.head h2,.head .lead,.copy .eyebrow,.copy h2,.copy p,.quote-section p,.sunset-content .eyebrow,.sunset-content h2,.sunset-content p,.sunset-content .hero-actions,.personal-copy .eyebrow,.personal-copy h2,.personal-lead,.personal-copy .hero-actions,.b2b-section .eyebrow,.b2b-section h2,.b2b-section .lead,.b2b-section .hero-actions,.booking .eyebrow,.booking h2,.booking p,.booking .quick,.contact-section .eyebrow,.contact-section h2,.contact-section .lead,.closing-inner .eyebrow,.closing-inner h2,.closing-inner p,.closing-inner .hero-actions,.footer-brand strong,.footer-brand p").forEach((el,index)=>{el.classList.add("text-reveal");el.style.setProperty("--text-delay",`${Math.min(index%4*70,210)}ms`)});
     document.querySelectorAll(".main-photo,.card img,.menu-card img,.gallery img,.event-img,.personal-media,.b2b-image img,.contact-grid iframe,.hero-logo").forEach((el)=>el.classList.add("image-reveal"));
     const setNavState=()=>{siteNav.classList.toggle("scrolled",window.scrollY>24);backTop.classList.toggle("show",window.scrollY>700);if(!reduceMotion){document.querySelector(".sunset-section")?.style.setProperty("--sunset-shift",`${Math.min(26,Math.max(-26,(window.scrollY-window.innerHeight)*.025))}px`)}};
     setNavState();window.addEventListener("scroll",setNavState,{passive:true});backTop.addEventListener("click",()=>window.scrollTo({top:0,behavior:reduceMotion?"auto":"smooth"}));
@@ -273,7 +280,7 @@
     const navObserver=new IntersectionObserver((entries)=>{entries.forEach((entry)=>{if(entry.isIntersecting){navTargets.forEach(({a})=>a.classList.remove("active"));const active=navTargets.find((item)=>item.section===entry.target);active?.a.classList.add("active")}})},{rootMargin:"-35% 0px -55% 0px",threshold:0});
     navTargets.forEach(({section})=>navObserver.observe(section));
     const revealObserver=new IntersectionObserver((entries)=>entries.forEach((entry)=>{if(entry.isIntersecting){entry.target.classList.add("visible");revealObserver.unobserve(entry.target)}}),{threshold:.12,rootMargin:"0px 0px -8% 0px"});
-    document.querySelectorAll(".reveal,.motion-child,.image-reveal").forEach((el)=>revealObserver.observe(el));
+    document.querySelectorAll(".reveal,.motion-child,.image-reveal,.text-reveal").forEach((el)=>revealObserver.observe(el));
     document.querySelectorAll(".tab-btn").forEach((btn)=>btn.addEventListener("click",()=>{document.querySelectorAll(".tab-btn").forEach((b)=>b.classList.remove("active"));document.querySelectorAll(".tab-panel").forEach((p)=>p.classList.remove("active"));btn.classList.add("active");document.getElementById(`tab-${btn.dataset.tab}`).classList.add("active")}));
     document.querySelectorAll(".faq-list details").forEach((item)=>item.addEventListener("toggle",()=>{if(item.open){document.querySelectorAll(".faq-list details").forEach((other)=>{if(other!==item)other.open=false})}}));
     const lightbox=document.getElementById("lightbox");const lightboxImg=lightbox.querySelector("img");const lightboxCaption=lightbox.querySelector(".lightbox-caption");let galleryImages=[];let galleryIndex=0;const openLightbox=(index)=>{galleryImages=[...document.querySelectorAll(".tab-panel.active .gallery img")];galleryIndex=index;const img=galleryImages[galleryIndex];if(!img)return;lightboxImg.src=img.currentSrc||img.src;lightboxImg.alt=img.alt;lightboxCaption.textContent=img.alt;lightbox.classList.add("open");lightbox.setAttribute("aria-hidden","false");document.body.style.overflow="hidden"};const closeLightbox=()=>{lightbox.classList.remove("open");lightbox.setAttribute("aria-hidden","true");lightboxImg.src="";document.body.style.overflow=""};const moveLightbox=(step)=>{if(!galleryImages.length)return;galleryIndex=(galleryIndex+step+galleryImages.length)%galleryImages.length;openLightbox(galleryIndex)};document.addEventListener("click",(event)=>{const img=event.target.closest(".tab-panel.active .gallery img");if(!img)return;openLightbox([...document.querySelectorAll(".tab-panel.active .gallery img")].indexOf(img))});lightbox.querySelector(".lightbox-close").addEventListener("click",closeLightbox);lightbox.querySelector(".lightbox-prev").addEventListener("click",()=>moveLightbox(-1));lightbox.querySelector(".lightbox-next").addEventListener("click",()=>moveLightbox(1));lightbox.addEventListener("click",(event)=>{if(event.target===lightbox)closeLightbox()});window.addEventListener("keydown",(event)=>{if(!lightbox.classList.contains("open"))return;if(event.key==="Escape")closeLightbox();if(event.key==="ArrowLeft")moveLightbox(-1);if(event.key==="ArrowRight")moveLightbox(1)});
