@@ -396,6 +396,18 @@ async function galleryPage() {
   const countByTab = Object.fromEntries(galleryTabs.map(([key]) => [key, data.filter((item) => item.category === key).length]));
   const activeItems = data.filter((item) => item.category === activeTab);
   const empty = { category: activeTab, sort_order: activeItems.length + 1, is_visible: true };
+  const frameGuide = [
+    ["Ngang lớn", "Nên dùng ảnh ngang 4:3 hoặc 16:10"],
+    ["Vuông", "Nên dùng ảnh 1:1"],
+    ["Vuông", "Nên dùng ảnh 1:1"],
+    ["Ngang dài", "Nên dùng ảnh ngang 16:9"],
+    ["Vuông", "Nên dùng ảnh 1:1"],
+    ["Dọc", "Nên dùng ảnh dọc 3:4 hoặc 4:5"]
+  ];
+  const frameInfo = (index = 0) => {
+    const frameIndex = index % frameGuide.length;
+    return { number: frameIndex + 1, title: frameGuide[frameIndex][0], hint: frameGuide[frameIndex][1] };
+  };
   body.innerHTML = `
     <div class="gallery-admin">
       <div class="content-helper gallery-admin-head">
@@ -414,6 +426,7 @@ async function galleryPage() {
             <span class="content-kicker">TAB ẢNH</span>
             <h2>${esc(activeMeta[1])}</h2>
             <p class="muted">${esc(activeMeta[2])}</p>
+            <p class="gallery-frame-guide">Khung lặp theo 6 ảnh: <b>1 ngang lớn</b> · <b>2 vuông</b> · <b>3 vuông</b> · <b>4 ngang dài</b> · <b>5 vuông</b> · <b>6 dọc</b>. Ảnh thứ 7 quay lại khung 1.</p>
           </div>
           <button class="btn primary" id="addGalleryImage" type="button">+ Thêm ảnh vào ${esc(activeMeta[1])}</button>
         </div>
@@ -421,12 +434,15 @@ async function galleryPage() {
       </section>
     </div>`;
   const render = (items) => {
-    $("#items").innerHTML = items.length ? items.map((row) => `
+    $("#items").innerHTML = items.length ? items.map((row, index) => {
+      const frame = frameInfo(index);
+      return `
       <form class="gallery-image-form" data-id="${row.id || ""}">
-        <div class="gallery-image-preview">${row.image_url ? `<img src="${esc(row.image_url)}" alt="">` : `<span>Chưa chọn ảnh</span>`}</div>
+        <div class="gallery-image-preview">${row.image_url ? `<img src="${esc(row.image_url)}" alt="">` : `<span>Chưa chọn ảnh</span>`}<small>Vị trí ${frame.number}: ${esc(frame.title)}</small></div>
         <input name="category" type="hidden" value="${esc(row.category || activeTab)}">
         <input class="item-upload-input" type="file" accept="image/png,image/jpeg,image/webp" hidden>
         <div class="gallery-image-fields">
+          <div class="gallery-frame-label full"><b>Khung hiển thị: Vị trí ${frame.number} - ${esc(frame.title)}</b><span>${esc(frame.hint)}</span></div>
           <label>Caption<input name="caption" value="${esc(row.caption || "")}" placeholder="Ví dụ: Góc ven sông buổi chiều"></label>
           <label>Thứ tự<input name="sort_order" type="number" value="${row.sort_order || 0}"></label>
           <label class="full">Mô tả<textarea name="description" placeholder="Ghi chú nội bộ hoặc mô tả ngắn nếu cần">${esc(row.description || "")}</textarea></label>
@@ -441,7 +457,8 @@ async function galleryPage() {
           <button class="btn danger delete-btn" type="button">Xoá mục</button>
           <button class="btn primary" type="submit">${row.id ? "Lưu ảnh" : "Thêm ảnh"}</button>
         </div>
-      </form>`).join("") : `<div class="empty-card"><h2>Chưa có ảnh trong tab này</h2><p class="muted">Bấm “Thêm ảnh vào ${esc(activeMeta[1])}” để bắt đầu.</p></div>`;
+      </form>`;
+    }).join("") : `<div class="empty-card"><h2>Chưa có ảnh trong tab này</h2><p class="muted">Bấm “Thêm ảnh vào ${esc(activeMeta[1])}” để bắt đầu.</p></div>`;
   };
   const setItemImage = (form, url) => {
     form.image_url.value = url || "";
