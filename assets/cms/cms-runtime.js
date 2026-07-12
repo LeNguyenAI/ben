@@ -14,6 +14,17 @@
     const el = document.querySelector(selector);
     if (el) el.setAttribute(name, value);
   };
+  const renderCmsList = (selector, items = []) => {
+    const nodes = [...document.querySelectorAll(selector)];
+    items.forEach((item, index) => {
+      const node = nodes[index];
+      if (!node) return;
+      const title = node.querySelector("b,h3,strong");
+      const desc = node.querySelector("span,p");
+      if (title && item.title !== undefined) title.textContent = item.title || "";
+      if (desc && item.description !== undefined) desc.textContent = item.description || "";
+    });
+  };
   const esc = (value = "") => String(value).replace(/[&<>"']/g, (ch) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[ch]));
   const setLink = (selector, value) => {
     if (!value) return;
@@ -92,12 +103,21 @@
       text(target.title, row.title);
       text(target.description, row.description);
       if (row.image_url) {
+        if (row.section_key === "closing") {
+          document.querySelector(".closing-cta")?.style.setProperty("--closing-bg", `url("${row.image_url}")`);
+        }
         const section = document.getElementById(row.section_key);
         const img = section ? section.querySelector("img") : null;
         if (img) {
           img.src = row.image_url;
           if (row.image_alt) img.alt = row.image_alt;
         }
+      }
+      const extra = row.content_json || {};
+      if (row.section_key === "strip" && Array.isArray(extra.items)) renderCmsList(".strip-grid > div", extra.items);
+      if (row.section_key === "b2b") {
+        if (Array.isArray(extra.event_items)) renderCmsList("#b2b .b2b-list .b2b-item", extra.event_items);
+        if (Array.isArray(extra.format_items)) renderCmsList("#b2b .format-strip > div", extra.format_items);
       }
     });
   }

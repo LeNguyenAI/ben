@@ -20,7 +20,8 @@ on conflict (setting_key) do update set setting_value = excluded.setting_value;
 insert into public.site_sections (section_key, eyebrow, title, description, image_url, image_alt, sort_order) values
 ('hero','Riverside Garden - Thanh Đa','Bến Chill Garden','Một góc sân vườn ven sông để ngắm Landmark 81, ăn tối cùng người thương, gặp bạn bè và tổ chức những buổi vui vừa đủ riêng tư.','/assets/hero-riverside.jpg','Không gian ven sông Bến Chill Garden',1),
 ('hero_message',null,'Chill bên sông. Trọn từng khoảnh khắc.',null,null,null,2),
-('about','Câu chuyện Nhà Bến','Một nơi để gặp nhau, không phải chỉ để ghé qua','Bến Chill Garden được tạo nên cho những cuộc hẹn đời thường: một bữa tối cùng gia đình, buổi gặp cuối tuần với bạn bè hay một dịp đặc biệt cần không gian riêng. Mỗi khu vực đều được sắp xếp để khách cảm thấy thoải mái, dễ trò chuyện và không bị gò bó.','/assets/cover-main.jpg','Không gian Bến Chill Garden ven sông',3),
+('strip',null,'Dải điểm nổi bật',null,null,null,3),
+('about','Câu chuyện Nhà Bến','Một nơi để gặp nhau, không phải chỉ để ghé qua','Bến Chill Garden được tạo nên cho những cuộc hẹn đời thường: một bữa tối cùng gia đình, buổi gặp cuối tuần với bạn bè hay một dịp đặc biệt cần không gian riêng. Mỗi khu vực đều được sắp xếp để khách cảm thấy thoải mái, dễ trò chuyện và không bị gò bó.','/assets/cover-main.jpg','Không gian Bến Chill Garden ven sông',4),
 ('quote',null,null,'“Có những nơi người ta đến để ăn.\nCó những nơi người ta ở lại vì khung cảnh.”',null,null,4),
 ('spaces','Không gian','Đi bao nhiêu người cũng có một góc phù hợp','Từ bàn ven sông cho buổi hẹn nhẹ nhàng đến khu sân vườn rộng rãi cho gia đình, nhóm bạn và tiệc riêng.',null,null,5),
 ('sunset','Sunset At Nhà Bến','Một góc ngắm Landmark 81 từ bên kia sông','Tầm chiều xuống, Landmark 81 hiện ra giữa ánh hoàng hôn và mặt sông. Đây là một trong những góc đẹp nhất để bắt đầu buổi tối tại Nhà Bến.','/assets/pano-01.jpg','Hoàng hôn ven sông và Landmark 81',6),
@@ -33,6 +34,34 @@ insert into public.site_sections (section_key, eyebrow, title, description, imag
 ('closing','Một buổi chiều bên sông?','Giữ một góc đẹp tại Nhà Bến','Chọn ngày, số lượng khách và khu vực mong muốn. Nhà Bến sẽ hỗ trợ sắp xếp phần còn lại.',null,null,13),
 ('footer',null,'Bến Chill Garden','Chill bên sông. Trọn từng khoảnh khắc.',null,null,14)
 on conflict (section_key) do update set eyebrow = excluded.eyebrow, title = excluded.title, description = excluded.description, image_url = excluded.image_url, image_alt = excluded.image_alt, sort_order = excluded.sort_order;
+
+update public.site_sections
+set content_json = '{
+  "items": [
+    {"title": "Ven sông Thanh Đa", "description": "Không gian xanh, nhiều góc ngồi thoáng"},
+    {"title": "Góc ngắm Landmark 81", "description": "Đẹp nhất vào chiều tối"},
+    {"title": "Tiệc và nhóm đông", "description": "Sinh nhật, liên hoan, họp mặt"},
+    {"title": "Food & Beer", "description": "Món ăn chia sẻ, bia lạnh, đồ uống"}
+  ]
+}'::jsonb
+where section_key = 'strip' and (content_json = '{}'::jsonb or content_json is null);
+
+update public.site_sections
+set content_json = '{
+  "event_items": [
+    {"title": "Corporate Event", "description": "Tiệc công ty, year-end party, gặp mặt đối tác và networking."},
+    {"title": "Team Gathering", "description": "Họp nhóm, liên hoan phòng ban và những buổi gặp sau giờ làm."},
+    {"title": "Private Booking", "description": "Nhóm riêng cần khu vực phù hợp, lịch trình rõ và cách phục vụ riêng."},
+    {"title": "Brand Activation", "description": "Launch, pop-up, workshop, acoustic night và hoạt động cộng đồng."}
+  ],
+  "format_items": [
+    {"title": "Riverside Corporate Night", "description": "Buổi tối doanh nghiệp có không khí, riêng tư và dễ kết nối."},
+    {"title": "Team & Community", "description": "Không gian cho đội nhóm, cộng đồng và những cuộc gặp sau giờ làm."},
+    {"title": "Activation & Festival", "description": "Phù hợp workshop, pop-up, launch và hoạt động thương hiệu."},
+    {"title": "Private Celebration", "description": "Những dịp riêng cần góc ngồi, menu và setup chỉn chu."}
+  ]
+}'::jsonb
+where section_key = 'b2b' and (content_json = '{}'::jsonb or content_json is null);
 
 delete from public.menu_items;
 insert into public.menu_items (category, name, description, price, image_url, image_alt, sort_order) values

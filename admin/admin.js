@@ -163,9 +163,59 @@ async function pickImageFromLibrary() {
 }
 
 async function contentPage() {
+  const defaultExtras = {
+    strip: {
+      items: [
+        { title: "Ven sông Thanh Đa", description: "Không gian xanh, nhiều góc ngồi thoáng" },
+        { title: "Góc ngắm Landmark 81", description: "Đẹp nhất vào chiều tối" },
+        { title: "Tiệc và nhóm đông", description: "Sinh nhật, liên hoan, họp mặt" },
+        { title: "Food & Beer", description: "Món ăn chia sẻ, bia lạnh, đồ uống" }
+      ]
+    },
+    b2b: {
+      event_items: [
+        { title: "Corporate Event", description: "Tiệc công ty, year-end party, gặp mặt đối tác và networking." },
+        { title: "Team Gathering", description: "Họp nhóm, liên hoan phòng ban và những buổi gặp sau giờ làm." },
+        { title: "Private Booking", description: "Nhóm riêng cần khu vực phù hợp, lịch trình rõ và cách phục vụ riêng." },
+        { title: "Brand Activation", description: "Launch, pop-up, workshop, acoustic night và hoạt động cộng đồng." }
+      ],
+      format_items: [
+        { title: "Riverside Corporate Night", description: "Buổi tối doanh nghiệp có không khí, riêng tư và dễ kết nối." },
+        { title: "Team & Community", description: "Không gian cho đội nhóm, cộng đồng và những cuộc gặp sau giờ làm." },
+        { title: "Activation & Festival", description: "Phù hợp workshop, pop-up, launch và hoạt động thương hiệu." },
+        { title: "Private Celebration", description: "Những dịp riêng cần góc ngồi, menu và setup chỉn chu." }
+      ]
+    }
+  };
+  const renderExtraEditor = (row) => {
+    const data = { ...(defaultExtras[row.section_key] || {}), ...(row.content_json || {}) };
+    const listEditor = (key, title, items = []) => `<div class="extra-list" data-extra-key="${key}">
+      <h3>${esc(title)}</h3>
+      ${items.map((item, index) => `<div class="extra-item" data-index="${index}">
+        <label>Tiêu đề<input data-field="title" value="${esc(item.title || "")}"></label>
+        <label>Mô tả<textarea data-field="description">${esc(item.description || "")}</textarea></label>
+      </div>`).join("")}
+    </div>`;
+    if (row.section_key === "strip") return `<div class="extra-editor">${listEditor("items", "4 điểm nổi bật sau hero", data.items || defaultExtras.strip.items)}</div>`;
+    if (row.section_key === "b2b") return `<div class="extra-editor">${listEditor("event_items", "Nhóm sự kiện B2B", data.event_items || defaultExtras.b2b.event_items)}${listEditor("format_items", "Dải format bên dưới B2B", data.format_items || defaultExtras.b2b.format_items)}</div>`;
+    return "";
+  };
+  const collectExtraEditor = (form, fallback) => {
+    const editor = $(".extra-editor", form);
+    if (!editor) return fallback;
+    const output = {};
+    $$(".extra-list", editor).forEach((list) => {
+      output[list.dataset.extraKey] = $$(".extra-item", list).map((item) => ({
+        title: $('[data-field="title"]', item)?.value || "",
+        description: $('[data-field="description"]', item)?.value || ""
+      }));
+    });
+    return output;
+  };
   const sectionNames = {
     hero: "Hero đầu trang",
     hero_message: "Thông điệp hero",
+    strip: "4 điểm nổi bật sau hero",
     about: "Câu chuyện Nhà Bến",
     intro: "Câu chuyện Nhà Bến",
     story: "Câu chuyện Nhà Bến",
@@ -213,7 +263,8 @@ async function contentPage() {
             <label>Alt ảnh<input name="image_alt" value="${esc(row.image_alt || "")}" placeholder="Mô tả ảnh cho Google và người dùng"></label>
           </div>
         </div>
-        <details class="advanced-box"><summary>Nâng cao: URL ảnh thủ công và dữ liệu phụ</summary><div class="grid"><label class="full">URL ảnh thủ công<input class="manual-image-url" value="${esc(row.image_url || "")}" placeholder="https://..."></label><label class="full">Dữ liệu phụ<textarea name="content_json">${esc(JSON.stringify(row.content_json || {}, null, 2))}</textarea></label></div></details>
+        ${renderExtraEditor(row)}
+        <details class="advanced-box"><summary>Nâng cao: URL ảnh thủ công và dữ liệu phụ</summary><div class="grid"><label class="full">URL ảnh thủ công<input class="manual-image-url" value="${esc(row.image_url || "")}" placeholder="https://..."></label><label class="full">Dữ liệu phụ<textarea name="content_json">${esc(JSON.stringify(row.content_json || defaultExtras[row.section_key] || {}, null, 2))}</textarea></label></div></details>
         <div class="row content-save-row"><span class="mini">Cập nhật: ${esc(row.updated_at || "Chưa có thông tin")}</span><button class="btn primary">Lưu nội dung</button></div>
       </form>`;
     }).join("")}</div>
@@ -255,7 +306,7 @@ async function contentPage() {
       const payload = Object.fromEntries(new FormData(form));
       payload.is_visible = payload.is_visible === "true";
       payload.sort_order = Number(payload.sort_order || 0);
-      payload.content_json = parseJSON(payload.content_json);
+      payload.content_json = collectExtraEditor(form, parseJSON(payload.content_json));
       const id = form.dataset.id;
       const current = data.find((row) => row.id === id);
       await supa.from("content_revisions").insert({ entity_type: "site_sections", entity_id: id, before_data: current, after_data: payload });
