@@ -294,6 +294,7 @@ async function uploadPage() {
 
 async function tablePage(kind) {
   const isMenu = kind === "menu";
+  if (!isMenu) return galleryPage();
   const table = isMenu ? "menu_items" : "gallery_items";
   const body = shell(isMenu ? "Menu" : "Gallery", isMenu ? "Thêm, sửa, ẩn hiện và sắp xếp món." : "Quản lý ảnh theo tab hiển thị ngoài website. Video thật nằm ở mục Video riêng.");
   if (!body || !(await requireAdmin())) return;
@@ -375,6 +376,124 @@ async function tablePage(kind) {
     if (!form.dataset.id || !confirm("Xóa mục này?")) return;
     const { error } = await supa.from(table).delete().eq("id", form.dataset.id);
     toast(error ? error.message : "Đã xóa", !error);
+    if (!error) form.remove();
+  });
+}
+
+async function galleryPage() {
+  const body = shell("Gallery", "Quản lý ảnh theo từng tab hiển thị ngoài website.");
+  if (!body || !(await requireAdmin())) return;
+  const galleryTabs = [
+    ["space", "Không gian chill", "Ảnh không gian, sân vườn, ven sông và góc ngắm Landmark."],
+    ["guest", "Hình khách", "Khoảnh khắc khách check-in, dùng bữa và trải nghiệm tại quán."],
+    ["food", "Food & Beer", "Món ăn, bia, đồ uống và bàn tiệc dùng chung."],
+    ["event", "Tiệc & đêm chill", "Sinh nhật, tiệc riêng, acoustic night và các buổi tối có không khí."]
+  ];
+  const { data = [] } = await supa.from("gallery_items").select("*").order("sort_order", { ascending: true });
+  let activeTab = new URLSearchParams(location.search).get("tab") || "space";
+  if (!galleryTabs.some(([key]) => key === activeTab)) activeTab = "space";
+  const activeMeta = galleryTabs.find(([key]) => key === activeTab) || galleryTabs[0];
+  const countByTab = Object.fromEntries(galleryTabs.map(([key]) => [key, data.filter((item) => item.category === key).length]));
+  const activeItems = data.filter((item) => item.category === activeTab);
+  const empty = { category: activeTab, sort_order: activeItems.length + 1, is_visible: true };
+  body.innerHTML = `
+    <div class="gallery-admin">
+      <div class="content-helper gallery-admin-head">
+        <div>
+          <b>Quản lý ảnh Gallery theo tab</b>
+          <p class="muted">Chọn đúng tab bên dưới rồi thêm ảnh. Ảnh sẽ tự vào đúng nhóm ngoài website, không cần nhập mã tab thủ công.</p>
+        </div>
+        <a class="btn primary" href="/admin/videos/">Quản lý video thật</a>
+      </div>
+      <nav class="gallery-admin-tabs" aria-label="Chọn tab ảnh">
+        ${galleryTabs.map(([key, label]) => `<a class="${activeTab === key ? "active" : ""}" href="/admin/gallery/?tab=${key}">${label}<b>${countByTab[key] || 0}</b></a>`).join("")}
+      </nav>
+      <section class="panel gallery-tab-panel">
+        <div class="gallery-tab-title">
+          <div>
+            <span class="content-kicker">TAB ẢNH</span>
+            <h2>${esc(activeMeta[1])}</h2>
+            <p class="muted">${esc(activeMeta[2])}</p>
+          </div>
+          <button class="btn primary" id="addGalleryImage" type="button">+ Thêm ảnh vào ${esc(activeMeta[1])}</button>
+        </div>
+        <div class="gallery-tab-grid" id="items"></div>
+      </section>
+    </div>`;
+  const render = (items) => {
+    $("#items").innerHTML = items.length ? items.map((row) => `
+      <form class="gallery-image-form" data-id="${row.id || ""}">
+        <div class="gallery-image-preview">${row.image_url ? `<img src="${esc(row.image_url)}" alt="">` : `<span>Chưa chọn ảnh</span>`}</div>
+        <input name="category" type="hidden" value="${esc(row.category || activeTab)}">
+        <input class="item-upload-input" type="file" accept="image/png,image/jpeg,image/webp" hidden>
+        <div class="gallery-image-fields">
+          <label>Caption<input name="caption" value="${esc(row.caption || "")}" placeholder="Ví dụ: Góc ven sông buổi chiều"></label>
+          <label>Thứ tự<input name="sort_order" type="number" value="${row.sort_order || 0}"></label>
+          <label class="full">Mô tả<textarea name="description" placeholder="Ghi chú nội bộ hoặc mô tả ngắn nếu cần">${esc(row.description || "")}</textarea></label>
+          <label class="full">Ảnh URL<input name="image_url" value="${esc(row.image_url || "")}"></label>
+          <label>Alt ảnh<input name="image_alt" value="${esc(row.image_alt || row.caption || "")}" placeholder="Mô tả ảnh cho Google"></label>
+          <label>Trạng thái<select name="is_visible"><option value="true" ${row.is_visible !== false ? "selected" : ""}>Hiển thị</option><option value="false" ${row.is_visible === false ? "selected" : ""}>Ẩn</option></select></label>
+        </div>
+        <div class="gallery-image-actions">
+          <button class="btn item-pick-image" type="button">Chọn từ thư viện</button>
+          <button class="btn item-upload-image" type="button">Upload ảnh mới</button>
+          <button class="btn danger item-clear-image" type="button">Xoá ảnh</button>
+          <button class="btn danger delete-btn" type="button">Xoá mục</button>
+          <button class="btn primary" type="submit">${row.id ? "Lưu ảnh" : "Thêm ảnh"}</button>
+        </div>
+      </form>`).join("") : `<div class="empty-card"><h2>Chưa có ảnh trong tab này</h2><p class="muted">Bấm “Thêm ảnh vào ${esc(activeMeta[1])}” để bắt đầu.</p></div>`;
+  };
+  const setItemImage = (form, url) => {
+    form.image_url.value = url || "";
+    const preview = $(".gallery-image-preview", form);
+    if (!preview) return;
+    preview.innerHTML = url ? `<img src="${esc(url)}" alt="">` : `<span>Chưa chọn ảnh</span>`;
+  };
+  render(activeItems);
+  $("#addGalleryImage").addEventListener("click", () => render([empty, ...activeItems]));
+  $("#items").addEventListener("change", async (event) => {
+    const form = event.target.closest(".gallery-image-form");
+    if (!form) return;
+    if (event.target.name === "image_url") setItemImage(form, event.target.value.trim());
+    if (event.target.classList.contains("item-upload-input")) {
+      const file = event.target.files[0];
+      if (!file) return;
+      if (!["image/png", "image/jpeg", "image/webp"].includes(file.type) || file.size > 8 * 1024 * 1024) return toast("Chỉ nhận JPG, PNG, WEBP dưới 8MB.", false);
+      const uploadedName = safeFileName(file.name);
+      const { error } = await supa.storage.from(bucket).upload(uploadedName, file, { upsert: false });
+      if (error) return toast(error.message, false);
+      const { data: publicUrl } = supa.storage.from(bucket).getPublicUrl(uploadedName);
+      setItemImage(form, publicUrl.publicUrl);
+      toast("Đã upload và gắn ảnh vào tab này");
+    }
+  });
+  $("#items").addEventListener("submit", async (event) => {
+    const form = event.target.closest(".gallery-image-form");
+    if (!form) return;
+    event.preventDefault();
+    const payload = Object.fromEntries(new FormData(form));
+    payload.category = activeTab;
+    payload.is_visible = payload.is_visible === "true";
+    payload.sort_order = Number(payload.sort_order || 0);
+    const id = form.dataset.id;
+    const request = id ? supa.from("gallery_items").update(payload).eq("id", id) : supa.from("gallery_items").insert(payload);
+    const { error } = await request;
+    toast(error ? error.message : "Đã lưu ảnh Gallery", !error);
+    if (!error) setTimeout(() => location.href = `/admin/gallery/?tab=${activeTab}`, 500);
+  });
+  $("#items").addEventListener("click", async (event) => {
+    const form = event.target.closest(".gallery-image-form");
+    if (!form) return;
+    if (event.target.classList.contains("item-upload-image")) $(".item-upload-input", form)?.click();
+    if (event.target.classList.contains("item-clear-image")) setItemImage(form, "");
+    if (event.target.classList.contains("item-pick-image")) {
+      const url = await pickImageFromLibrary();
+      if (url) setItemImage(form, url);
+    }
+    if (!event.target.classList.contains("delete-btn")) return;
+    if (!form.dataset.id || !confirm("Xoá ảnh này khỏi tab?")) return;
+    const { error } = await supa.from("gallery_items").delete().eq("id", form.dataset.id);
+    toast(error ? error.message : "Đã xoá ảnh", !error);
     if (!error) form.remove();
   });
 }
