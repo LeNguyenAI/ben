@@ -136,8 +136,8 @@
       const panel = document.getElementById(`tab-${key}`);
       const gallery = panel ? panel.querySelector(".gallery") : null;
       if (!gallery) return;
-      gallery.innerHTML = items.slice(0, 6).map((item, index) => `
-        <img class="${index === 0 ? "tall" : index === 3 ? "wide" : ""}" src="${esc(item.image_url)}" alt="${esc(item.image_alt || item.caption || "Bến Chill Garden")}" width="1600" height="1200" loading="lazy">
+      gallery.innerHTML = items.map((item, index) => `
+        <img class="${index % 6 === 0 ? "tall" : index % 6 === 3 ? "wide" : ""}" src="${esc(item.image_url)}" alt="${esc(item.image_alt || item.caption || "Bến Chill Garden")}" width="1600" height="1200" loading="lazy">
       `).join("");
     });
   }
