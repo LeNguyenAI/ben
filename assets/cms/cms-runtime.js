@@ -32,6 +32,14 @@
   };
   const phoneHref = (phone) => phone ? `tel:${phone.replace(/[^\d+]/g, "")}` : "";
   const mailHref = (email) => email ? `mailto:${email}` : "";
+  const applyLogo = (logoUrl) => {
+    if (!logoUrl) return;
+    document.querySelectorAll(".brand img,.hero-logo img,footer img").forEach((img) => {
+      img.src = logoUrl;
+      img.alt = img.alt || "Logo Bến Chill Garden";
+    });
+    document.querySelector("link[rel='icon']")?.setAttribute("href", logoUrl);
+  };
   const isSafeUrl = (value = "") => {
     try {
       const url = new URL(value.trim());
@@ -133,7 +141,7 @@
     if (error || !data || !data.length || !grid) return;
     grid.innerHTML = data.map((item) => `
       <article class="menu-card">
-        <img src="${esc(item.image_url || "./assets/food-01.jpg")}" alt="${esc(item.image_alt || item.name || "Món tại Bến Chill Garden")}" width="1200" height="1600" loading="lazy">
+        <img src="${esc(item.image_url || "./assets/food-01.jpg")}" alt="${esc(item.image_alt || item.name || "Món tại Bến Chill Garden")}" width="1200" height="1600" loading="lazy" decoding="async">
         <div><h3>${esc(item.name || "")}</h3><p>${esc(item.description || "")}</p><strong>${esc(item.price || "")}</strong></div>
       </article>
     `).join("");
@@ -145,7 +153,10 @@
       .select("*")
       .eq("is_visible", true)
       .order("sort_order", { ascending: true });
-    if (error || !data || !data.length) return;
+    if (error || !data || !data.length) {
+      grid.innerHTML = `<div class="video-empty"><b>Video đang cập nhật</b><span>Nhà Bến sẽ sớm thêm video thật từ CMS.</span></div>`;
+      return;
+    }
     const groups = data.reduce((acc, item) => {
       const key = item.category || "space";
       acc[key] = acc[key] || [];
@@ -157,7 +168,7 @@
       const gallery = panel ? panel.querySelector(".gallery") : null;
       if (!gallery) return;
       gallery.innerHTML = items.map((item, index) => `
-        <img class="gallery-frame-${(index % 6) + 1}" src="${esc(item.image_url)}" alt="${esc(item.image_alt || item.caption || "Bến Chill Garden")}" width="1600" height="1200" loading="lazy">
+        <img class="gallery-frame-${(index % 6) + 1}" src="${esc(item.image_url)}" alt="${esc(item.image_alt || item.caption || "Bến Chill Garden")}" width="1600" height="1200" loading="lazy" decoding="async">
       `).join("");
     });
   }
@@ -226,7 +237,7 @@
     grid.innerHTML = data.map((item) => {
       const normalized = normalizeVideo(item.video_type, item.video_url, item.embed_url);
       const poster = item.thumbnail_url || normalized.thumbnail || "./assets/hero-riverside.jpg";
-      return `<article class="video-card cms-video-card" data-video-id="${esc(item.id)}"><img src="${esc(poster)}" alt="${esc(item.title || "Video Bến Chill Garden")}" width="1600" height="900" loading="lazy"><button class="play" type="button" aria-label="Mở video ${esc(item.title || "")}"><span>PLAY</span></button><p>${esc(item.title || "Video Bến Chill Garden")}</p></article>`;
+      return `<article class="video-card cms-video-card" data-video-id="${esc(item.id)}"><img src="${esc(poster)}" alt="${esc(item.title || "Video Bến Chill Garden")}" width="1600" height="900" loading="lazy" decoding="async"><button class="play" type="button" aria-label="Mở video ${esc(item.title || "")}"><span>PLAY</span></button><p>${esc(item.title || "Video Bến Chill Garden")}</p></article>`;
     }).join("");
     grid.querySelectorAll(".cms-video-card").forEach((card) => {
       const item = data.find((row) => row.id === card.dataset.videoId);
@@ -240,6 +251,7 @@
   async function boot() {
     try {
       const settings = await loadSettings();
+      applyLogo(settings.logo_url);
       text(".brand strong", settings.brand_name);
       text(".footer-brand strong", settings.brand_name);
       text(".brand small", settings.short_tagline);
@@ -253,7 +265,12 @@
           if (/^\d|\+/.test(el.textContent.trim())) el.textContent = settings.phone;
         });
       }
-      if (settings.email) setLink("a[href^='mailto:']", mailHref(settings.email));
+      if (settings.email) {
+        setLink("a[href^='mailto:']", mailHref(settings.email));
+        document.querySelectorAll("a[href^='mailto:']").forEach((el) => {
+          el.textContent = settings.email;
+        });
+      }
       const socials = document.querySelector(".social-links");
       if (socials) {
         const links = [

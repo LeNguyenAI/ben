@@ -2,6 +2,7 @@ insert into public.site_settings (setting_key, setting_value) values
 ('brand_name','Bến Chill Garden'),
 ('short_tagline','Chill bên sông'),
 ('tagline','Chill bên sông. Trọn từng khoảnh khắc.'),
+('logo_url','/ben-chill-logo.png'),
 ('phone','0869 159 615'),
 ('email','cskhbenchillgarden@gmail.com'),
 ('address','1/50 Thanh Đa, Bình Thạnh, TP. Hồ Chí Minh'),

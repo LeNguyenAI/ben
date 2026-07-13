@@ -846,10 +846,33 @@ async function bookingsPage() {
 async function settingsPage() {
   const body = shell("Cài đặt", "Hotline, email, Google Maps, social, SEO và các link quan trọng.");
   if (!body || !(await requireAdmin())) return;
-  const keys = ["brand_name","short_tagline","tagline","phone","email","address","opening_hours","maps_url","zalo_url","facebook_url","tiktok_url","instagram_url","menu_pdf_url","seo_title","meta_description","og_image"];
+  const keys = ["brand_name","short_tagline","tagline","logo_url","phone","email","address","opening_hours","maps_url","zalo_url","facebook_url","tiktok_url","instagram_url","menu_pdf_url","seo_title","meta_description","og_image"];
+  const labels = {
+    brand_name: "Tên thương hiệu",
+    short_tagline: "Tagline ngắn trên header",
+    tagline: "Tagline đầy đủ",
+    logo_url: "Logo website",
+    phone: "Hotline",
+    email: "Email",
+    address: "Địa chỉ",
+    opening_hours: "Giờ mở cửa",
+    maps_url: "Link Google Maps",
+    zalo_url: "Link Zalo",
+    facebook_url: "Facebook",
+    tiktok_url: "TikTok",
+    instagram_url: "Instagram",
+    menu_pdf_url: "Link menu PDF",
+    seo_title: "SEO title",
+    meta_description: "SEO description",
+    og_image: "Ảnh chia sẻ mạng xã hội"
+  };
   const { data = [] } = await supa.from("site_settings").select("*");
   const map = Object.fromEntries(data.map((row) => [row.setting_key, row.setting_value || ""]));
-  body.innerHTML = `<form class="panel" id="settingsForm"><div class="grid">${keys.map((key) => `<label>${key}<textarea name="${key}">${esc(map[key] || "")}</textarea></label>`).join("")}</div><button class="btn primary full">Lưu cài đặt</button></form>`;
+  body.innerHTML = `<form class="panel" id="settingsForm">
+    <div class="content-helper"><div><b>Thay logo</b><p class="muted">Vào mục <b>Hình ảnh</b> upload logo mới, copy URL ảnh rồi dán vào ô <b>Logo website</b>. Logo sẽ đổi ở header, hero, footer và favicon.</p></div><a class="btn" href="/admin/images/">Mở thư viện ảnh</a></div>
+    <div class="grid">${keys.map((key) => `<label>${esc(labels[key] || key)}<textarea name="${key}" placeholder="${key === "logo_url" ? "Dán URL logo tại đây, ví dụ /ben-chill-logo.png hoặc link Supabase Storage" : ""}">${esc(map[key] || "")}</textarea></label>`).join("")}</div>
+    <button class="btn primary full">Lưu cài đặt</button>
+  </form>`;
   $("#settingsForm").addEventListener("submit", async (event) => {
     event.preventDefault();
     const values = Object.entries(Object.fromEntries(new FormData(event.target))).map(([setting_key, setting_value]) => ({ setting_key, setting_value }));
