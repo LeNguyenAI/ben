@@ -306,6 +306,58 @@
       .brand-title{font-size:clamp(2.35rem,13.4vw,3.35rem)!important}
       .brand-message{font-size:clamp(1.02rem,5.8vw,1.45rem)!important}
     }
+    @media(max-width:760px){
+      .hero-logo{
+        width:min(100%,540px)!important;
+        margin-left:auto!important;
+        margin-right:auto!important;
+        justify-self:center!important;
+        place-items:center!important;
+      }
+      .hero-logo img{
+        margin-left:auto!important;
+        margin-right:auto!important;
+      }
+      .strip-grid div{
+        align-content:start!important;
+        justify-items:start!important;
+        min-height:112px!important;
+        padding:18px!important;
+      }
+      .strip b{
+        line-height:1.22!important;
+      }
+      .strip span{
+        line-height:1.45!important;
+        margin-top:7px!important;
+      }
+      .gallery-tabs{
+        display:grid!important;
+        grid-template-columns:repeat(2,minmax(0,1fr))!important;
+        gap:14px 18px!important;
+        overflow:visible!important;
+        border-bottom:1px solid rgba(255,255,255,.08)!important;
+        padding-bottom:14px!important;
+      }
+      .gallery-tabs .tab-btn{
+        width:100%!important;
+        min-height:44px!important;
+        white-space:normal!important;
+        overflow:visible!important;
+        text-align:left!important;
+        font-size:clamp(.92rem,4.2vw,1.05rem)!important;
+        line-height:1.18!important;
+        padding:0 0 10px!important;
+      }
+      .gallery-tabs .tab-btn:last-child{
+        grid-column:1 / -1!important;
+      }
+    }
+    @media(max-width:390px){
+      .strip-grid div{min-height:118px!important;padding:16px!important}
+      .gallery-tabs{gap:12px 14px!important}
+      .gallery-tabs .tab-btn{font-size:.92rem!important}
+    }
   </style>
 </head>
 <body>
