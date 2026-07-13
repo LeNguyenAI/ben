@@ -49,6 +49,21 @@ where section_key = 'strip' and (content_json = '{}'::jsonb or content_json is n
 
 update public.site_sections
 set content_json = '{
+  "personal_items": [
+    {"title": "Sinh nhật", "description": "Setup bàn, góc chụp hình và khu vực theo số lượng khách."},
+    {"title": "Tiệc gia đình", "description": "Không gian thoáng, dễ ngồi cùng trẻ nhỏ và người lớn tuổi."},
+    {"title": "Hẹn hò", "description": "Một góc ven sông vừa đủ riêng cho buổi tối của hai người."},
+    {"title": "Họp mặt bạn bè", "description": "Bàn rộng, món chia sẻ và một cuộc vui không cần vội."}
+  ],
+  "ctas": [
+    {"title": "Tư vấn tiệc", "url": "#booking", "variant": "primary"},
+    {"title": "Gọi nhanh", "url": "tel:0869159615", "variant": "secondary"}
+  ]
+}'::jsonb
+where section_key = 'events' and (content_json = '{}'::jsonb or content_json is null);
+
+update public.site_sections
+set content_json = '{
   "event_items": [
     {"title": "Corporate Event", "description": "Tiệc công ty, year-end party, gặp mặt đối tác và networking."},
     {"title": "Team Gathering", "description": "Họp nhóm, liên hoan phòng ban và những buổi gặp sau giờ làm."},
@@ -60,6 +75,9 @@ set content_json = '{
     {"title": "Team & Community", "description": "Không gian cho đội nhóm, cộng đồng và những cuộc gặp sau giờ làm."},
     {"title": "Activation & Festival", "description": "Phù hợp workshop, pop-up, launch và hoạt động thương hiệu."},
     {"title": "Private Celebration", "description": "Những dịp riêng cần góc ngồi, menu và setup chỉn chu."}
+  ],
+  "ctas": [
+    {"title": "Trao đổi về sự kiện", "url": "#booking", "variant": "primary"}
   ]
 }'::jsonb
 where section_key = 'b2b' and (content_json = '{}'::jsonb or content_json is null);

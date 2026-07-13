@@ -25,6 +25,19 @@
       if (desc && item.description !== undefined) desc.textContent = item.description || "";
     });
   };
+  const renderCmsCtas = (selector, items = []) => {
+    const nodes = [...document.querySelectorAll(selector)];
+    items.forEach((item, index) => {
+      const node = nodes[index];
+      if (!node) return;
+      if (item.title !== undefined) node.textContent = item.title || "";
+      if (item.url) node.setAttribute("href", item.url);
+      if (item.variant) {
+        node.classList.toggle("primary", item.variant === "primary");
+        node.classList.toggle("secondary", item.variant === "secondary");
+      }
+    });
+  };
   const esc = (value = "") => String(value).replace(/[&<>"']/g, (ch) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[ch]));
   const setLink = (selector, value) => {
     if (!value) return;
@@ -123,9 +136,14 @@
       }
       const extra = row.content_json || {};
       if (row.section_key === "strip" && Array.isArray(extra.items)) renderCmsList(".strip-grid > div", extra.items);
+      if (row.section_key === "events") {
+        if (Array.isArray(extra.personal_items)) renderCmsList("#events .personal-list .personal-item", extra.personal_items);
+        if (Array.isArray(extra.ctas)) renderCmsCtas("#events .personal-copy .hero-actions a", extra.ctas);
+      }
       if (row.section_key === "b2b") {
         if (Array.isArray(extra.event_items)) renderCmsList("#b2b .b2b-list .b2b-item", extra.event_items);
         if (Array.isArray(extra.format_items)) renderCmsList("#b2b .format-strip > div", extra.format_items);
+        if (Array.isArray(extra.ctas)) renderCmsCtas("#b2b .hero-actions a", extra.ctas);
       }
     });
   }

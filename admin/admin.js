@@ -172,6 +172,18 @@ async function contentPage() {
         { title: "Food & Beer", description: "Món ăn chia sẻ, bia lạnh, đồ uống" }
       ]
     },
+    events: {
+      personal_items: [
+        { title: "Sinh nhật", description: "Setup bàn, góc chụp hình và khu vực theo số lượng khách." },
+        { title: "Tiệc gia đình", description: "Không gian thoáng, dễ ngồi cùng trẻ nhỏ và người lớn tuổi." },
+        { title: "Hẹn hò", description: "Một góc ven sông vừa đủ riêng cho buổi tối của hai người." },
+        { title: "Họp mặt bạn bè", description: "Bàn rộng, món chia sẻ và một cuộc vui không cần vội." }
+      ],
+      ctas: [
+        { title: "Tư vấn tiệc", url: "#booking", variant: "primary" },
+        { title: "Gọi nhanh", url: "tel:0869159615", variant: "secondary" }
+      ]
+    },
     b2b: {
       event_items: [
         { title: "Corporate Event", description: "Tiệc công ty, year-end party, gặp mặt đối tác và networking." },
@@ -184,6 +196,9 @@ async function contentPage() {
         { title: "Team & Community", description: "Không gian cho đội nhóm, cộng đồng và những cuộc gặp sau giờ làm." },
         { title: "Activation & Festival", description: "Phù hợp workshop, pop-up, launch và hoạt động thương hiệu." },
         { title: "Private Celebration", description: "Những dịp riêng cần góc ngồi, menu và setup chỉn chu." }
+      ],
+      ctas: [
+        { title: "Trao đổi về sự kiện", url: "#booking", variant: "primary" }
       ]
     }
   };
@@ -196,8 +211,17 @@ async function contentPage() {
         <label>Mô tả<textarea data-field="description">${esc(item.description || "")}</textarea></label>
       </div>`).join("")}
     </div>`;
+    const ctaEditor = (key, title, items = []) => `<div class="extra-list cta-list" data-extra-key="${key}">
+      <h3>${esc(title)}</h3>
+      ${items.map((item, index) => `<div class="extra-item cta-extra-item" data-index="${index}">
+        <label>Nhãn nút<input data-field="title" value="${esc(item.title || "")}"></label>
+        <label>Link nút<input data-field="url" value="${esc(item.url || "")}" placeholder="#booking, tel:0869159615 hoặc https://..."></label>
+        <label>Kiểu nút<select data-field="variant"><option value="primary" ${item.variant === "primary" ? "selected" : ""}>Nút chính</option><option value="secondary" ${item.variant === "secondary" ? "selected" : ""}>Nút phụ</option></select></label>
+      </div>`).join("")}
+    </div>`;
     if (row.section_key === "strip") return `<div class="extra-editor">${listEditor("items", "4 điểm nổi bật sau hero", data.items || defaultExtras.strip.items)}</div>`;
-    if (row.section_key === "b2b") return `<div class="extra-editor">${listEditor("event_items", "Nhóm sự kiện B2B", data.event_items || defaultExtras.b2b.event_items)}${listEditor("format_items", "Dải format bên dưới B2B", data.format_items || defaultExtras.b2b.format_items)}</div>`;
+    if (row.section_key === "events") return `<div class="extra-editor">${listEditor("personal_items", "Bảng nhu cầu tiệc cá nhân", data.personal_items || defaultExtras.events.personal_items)}${ctaEditor("ctas", "Nút CTA của phần Tiệc cá nhân", data.ctas || defaultExtras.events.ctas)}</div>`;
+    if (row.section_key === "b2b") return `<div class="extra-editor">${listEditor("event_items", "Nhóm sự kiện B2B", data.event_items || defaultExtras.b2b.event_items)}${listEditor("format_items", "Dải format bên dưới B2B", data.format_items || defaultExtras.b2b.format_items)}${ctaEditor("ctas", "Nút CTA của phần B2B", data.ctas || defaultExtras.b2b.ctas)}</div>`;
     return "";
   };
   const collectExtraEditor = (form, fallback) => {
@@ -205,10 +229,13 @@ async function contentPage() {
     if (!editor) return fallback;
     const output = {};
     $$(".extra-list", editor).forEach((list) => {
-      output[list.dataset.extraKey] = $$(".extra-item", list).map((item) => ({
-        title: $('[data-field="title"]', item)?.value || "",
-        description: $('[data-field="description"]', item)?.value || ""
-      }));
+      output[list.dataset.extraKey] = $$(".extra-item", list).map((item) => {
+        const row = {};
+        $$("[data-field]", item).forEach((field) => {
+          row[field.dataset.field] = field.value || "";
+        });
+        return row;
+      });
     });
     return output;
   };
