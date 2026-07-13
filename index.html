@@ -332,31 +332,75 @@
         margin-top:7px!important;
       }
       .gallery-tabs{
-        display:grid!important;
-        grid-template-columns:repeat(2,minmax(0,1fr))!important;
-        gap:14px 18px!important;
-        overflow:visible!important;
+        display:flex!important;
+        flex-wrap:nowrap!important;
+        gap:18px!important;
+        overflow-x:auto!important;
+        overflow-y:hidden!important;
         border-bottom:1px solid rgba(255,255,255,.08)!important;
-        padding-bottom:14px!important;
+        padding:0 0 12px!important;
+        margin-bottom:18px!important;
+        scroll-snap-type:x proximity;
       }
       .gallery-tabs .tab-btn{
-        width:100%!important;
-        min-height:44px!important;
-        white-space:normal!important;
+        flex:0 0 auto!important;
+        min-height:36px!important;
+        max-width:none!important;
+        white-space:nowrap!important;
         overflow:visible!important;
         text-align:left!important;
-        font-size:clamp(.92rem,4.2vw,1.05rem)!important;
-        line-height:1.18!important;
-        padding:0 0 10px!important;
-      }
-      .gallery-tabs .tab-btn:last-child{
-        grid-column:1 / -1!important;
+        font-size:clamp(.9rem,3.65vw,1rem)!important;
+        line-height:1.12!important;
+        padding:0 0 9px!important;
+        scroll-snap-align:start;
       }
     }
     @media(max-width:390px){
       .strip-grid div{min-height:118px!important;padding:16px!important}
-      .gallery-tabs{gap:12px 14px!important}
-      .gallery-tabs .tab-btn{font-size:.92rem!important}
+      .gallery-tabs{gap:15px!important}
+      .gallery-tabs .tab-btn{font-size:.88rem!important}
+    }
+    .head h2,.copy h2,.sunset-content h2,.personal-copy h2,.b2b-section h2,.booking h2,.contact-section h2,.closing-inner h2{
+      text-wrap:balance;
+      letter-spacing:0!important;
+    }
+    @media(min-width:981px){
+      .head h2,.copy h2,.sunset-content h2,.personal-copy h2,.b2b-section h2,.booking h2,.contact-section h2{
+        line-height:1.04!important;
+      }
+    }
+    @media(min-width:681px) and (max-width:980px){
+      .head h2,.copy h2,.sunset-content h2,.personal-copy h2,.b2b-section h2,.booking h2,.contact-section h2,.closing-inner h2{
+        font-size:clamp(2.45rem,6.1vw,3.6rem)!important;
+        line-height:1.04!important;
+        max-width:860px;
+      }
+    }
+    @media(max-width:760px){
+      .head h2,.copy h2,.sunset-content h2,.personal-copy h2,.b2b-section h2,.booking h2,.contact-section h2,.closing-inner h2{
+        font-size:clamp(2.28rem,9.2vw,3rem)!important;
+        line-height:1.04!important;
+        max-width:100%!important;
+      }
+      .head .lead,.copy p,.sunset-content p,.personal-lead,.b2b-section .lead,.booking p,.contact-section .lead,.closing-inner p{
+        font-size:clamp(1rem,4.45vw,1.15rem)!important;
+        line-height:1.62!important;
+      }
+      .gallery{
+        grid-auto-rows:142px!important;
+        gap:9px!important;
+      }
+      .gallery img{
+        border-radius:14px!important;
+      }
+    }
+    @media(max-width:390px){
+      .head h2,.copy h2,.sunset-content h2,.personal-copy h2,.b2b-section h2,.booking h2,.contact-section h2,.closing-inner h2{
+        font-size:clamp(2.05rem,8.8vw,2.7rem)!important;
+      }
+      .head .lead,.copy p,.sunset-content p,.personal-lead,.b2b-section .lead,.booking p,.contact-section .lead,.closing-inner p{
+        font-size:1rem!important;
+      }
     }
   </style>
 </head>
@@ -370,7 +414,7 @@
   </header>
   <main id="home">
     <section class="hero"><div class="container hero-grid"><div class="hero-copy"><span class="eyebrow">Riverside Garden - Thanh Đa</span><h1><span class="brand-title">Bến Chill Garden</span><span class="brand-message">Chill bên sông. Trọn từng khoảnh khắc.</span></h1><p>Một góc sân vườn ven sông để ngắm Landmark 81, ăn tối cùng người thương, gặp bạn bè và tổ chức những buổi vui vừa đủ riêng tư.</p><div class="hero-actions"><a class="btn primary" href="#booking">Giữ bàn đẹp</a><a class="btn secondary" href="https://www.google.com/maps/place/B%E1%BA%BFn+Chill+Garden/@10.8111234,106.7182749,16z/data=!3m1!4b1!4m6!3m5!1s0x3175290069e851d3:0x35d2839f1e7152b6!8m2!3d10.8111181!4d106.7208498!16s%2Fg%2F11zgqbbg63?entry=ttu&g_ep=EgoyMDI2MDcwOC4wIKXMDSoASAFQAw%3D%3D" target="_blank" rel="noopener noreferrer">Chỉ đường</a></div></div><aside class="hero-logo"><img src="./ben-chill-logo.png" alt="Logo Bến Chill Garden" width="220" height="220" /></aside></div></section>
-    <section class="strip"><div class="container strip-grid"><div><b>Ven sông Thanh Đa</b><span>Không gian xanh, nhiều góc ngồi thoáng</span></div><div><b>Góc ngắm Landmark 81</b><span>Đẹp nhất vào chiều tối</span></div><div><b>Tiệc và nhóm đông</b><span>Sinh nhật, liên hoan, họp mặt</span></div><div><b>Food & Beer</b><span>Món ăn chia sẻ, bia lạnh, đồ uống</span></div></div></section>
+    <section class="strip"><div class="container strip-grid"><div><b>Ven sông Thanh Đa</b><span>Không gian xanh, nhiều góc ngồi thoáng</span></div><div><b>Góc ngắm Landmark&nbsp;81</b><span>Đẹp nhất vào chiều tối</span></div><div><b>Tiệc và nhóm đông</b><span>Sinh nhật, liên hoan, họp mặt</span></div><div><b>Food & Beer</b><span>Món ăn chia sẻ, bia lạnh, đồ uống</span></div></div></section>
     <section class="section" id="about"><div class="container split"><div class="image-stack"><img class="main-photo" src="./assets/cover-main.jpg" alt="Không gian Bến Chill Garden ven sông" width="1600" height="608" loading="lazy"><div class="note"><b>Một chiếc hẹn khác giữa Thanh Đa</b><p>Gió sông, cây xanh và ánh chiều xuống chậm. Nhà Bến là nơi mọi người có thể ngồi lâu hơn một chút, ăn ngon và kể nhau nghe thêm vài câu chuyện.</p></div></div><div class="copy"><span class="eyebrow">Câu chuyện Nhà Bến</span><h2>Một nơi để gặp nhau, không phải chỉ để ghé qua</h2><p>Bến Chill Garden được tạo nên cho những cuộc hẹn đời thường: một bữa tối cùng gia đình, buổi gặp cuối tuần với bạn bè hay một dịp đặc biệt cần không gian riêng. Mỗi khu vực đều được sắp xếp để khách cảm thấy thoải mái, dễ trò chuyện và không bị gò bó.</p><div class="checks"><span>Không gian sân vườn thoáng, gần sông và nhiều cây xanh.</span><span>Có khu vực phù hợp cho nhóm nhỏ, gia đình và nhóm đông.</span><span>Hỗ trợ chọn khu ngồi, menu và setup theo nhu cầu.</span></div></div></div></section>
     <section class="quote-section"><div class="container"><p><span class="quote-line">“Có những nơi người ta đến&nbsp;để&nbsp;ăn.</span><span class="quote-line">Có những nơi người ta ở lại vì khung cảnh.”</span></p></div></section>
     <section class="section soft" id="spaces"><div class="container"><div class="head"><span class="eyebrow">Không gian</span><h2>Đi bao nhiêu người cũng có một góc phù hợp</h2><p class="lead">Từ bàn ven sông cho buổi hẹn nhẹ nhàng đến khu sân vườn rộng rãi cho gia đình, nhóm bạn và tiệc riêng.</p></div><div class="grid"><article class="card"><img src="./assets/space-01.jpg" alt="Khu ven sông" width="1600" height="1200" loading="lazy"><div><span class="tag">Ngắm hoàng hôn</span><h3>Khu ven sông</h3><p>Góc ngồi thoáng, hợp cho cặp đôi, nhóm nhỏ và những buổi tối muốn nhìn thành phố lên đèn.</p></div></article><article class="card"><img src="./assets/space-02.jpg" alt="Khu sân vườn" width="1600" height="1200" loading="lazy"><div><span class="tag">Gia đình & bạn bè</span><h3>Khu sân vườn</h3><p>Bàn rộng, lối đi thoáng, dễ ngồi lâu cho bữa tối cuối tuần cùng người thân.</p></div></article><article class="card"><img src="./assets/event-01.jpg" alt="Khu tiệc riêng" width="1600" height="1200" loading="lazy"><div><span class="tag">Nhóm đông</span><h3>Khu tiệc riêng</h3><p>Sắp xếp linh hoạt cho sinh nhật, liên hoan, họp mặt và các chương trình riêng.</p></div></article></div></div></section>
