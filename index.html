@@ -222,8 +222,9 @@
       .motion-child,.image-reveal,.text-reveal{opacity:1!important;transform:none!important;clip-path:none!important;filter:none!important}
       .card:hover img,.menu-card:hover img,.gallery img:hover,.video-card:hover img{transform:none!important}
     }
-    #menu{padding-top:58px!important}
-    #menu .head{margin-bottom:28px!important}
+    #b2b{padding-bottom:56px!important}
+    #menu{padding-top:34px!important}
+    #menu .head{margin-bottom:26px!important}
     .floating-contact{right:20px!important;bottom:152px!important;gap:14px!important}
     .floating-contact a{width:58px!important;height:58px!important;overflow:visible!important;border-color:rgba(255,255,255,.18)!important;box-shadow:0 16px 34px rgba(0,0,0,.26)!important;animation:contactFloat 3.2s ease-in-out infinite}
     .floating-contact a:nth-child(2){animation-delay:.55s}
@@ -235,6 +236,10 @@
     @keyframes contactFloat{0%,100%{transform:translateY(0)}50%{transform:translateY(-6px)}}
     @keyframes contactRing{0%{opacity:.62;transform:scale(.88)}70%{opacity:0;transform:scale(1.28)}100%{opacity:0;transform:scale(1.28)}}
     @keyframes phoneNudge{0%,100%{transform:rotate(0) scale(1)}12%{transform:rotate(-9deg) scale(1.04)}24%{transform:rotate(8deg) scale(1.04)}36%{transform:rotate(-5deg) scale(1.02)}48%{transform:rotate(0) scale(1)}}
+    @media(max-width:980px){
+      #b2b{padding-bottom:48px!important}
+      #menu{padding-top:32px!important}
+    }
     @media(max-width:760px){
       .quote-section p{max-width:430px!important;font-size:clamp(1.55rem,7vw,2.25rem)!important;line-height:1.2!important}
       .quote-section .quote-line{white-space:normal}
@@ -243,7 +248,9 @@
       .footer-brand{grid-template-columns:64px minmax(0,1fr)!important;column-gap:12px!important}
       .footer-brand img{width:64px!important;height:64px!important}
       .back-top{right:14px!important;bottom:88px!important}
-      #menu{padding-top:44px!important}
+      #b2b{padding-bottom:42px!important}
+      #menu{padding-top:30px!important}
+      #menu .head{margin-bottom:22px!important}
     }
     h1,h2,.brand-title,.brand-message,.quote-section p,.footer-brand strong,.card h3,.menu-card h3,.note b,.value-row span,.gallery-tab-title h2,.booking-board-head h2,.video-empty b{
       font-family:"Times New Roman","Liberation Serif","Noto Serif","DejaVu Serif",serif!important;
